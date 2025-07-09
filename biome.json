@@ -6,7 +6,17 @@
     "useIgnoreFile": false
   },
   "files": {
-    "ignoreUnknown": false
+    "ignoreUnknown": false,
+    "includes": ["src/**", "*.config.js", "*.config.ts", "*.config.mjs"],
+    "experimentalScannerIgnores": [
+      "node_modules/**",
+      ".next/**",
+      "dist/**",
+      "build/**",
+      "out/**",
+      "coverage/**",
+      ".git/**"
+    ]
   },
   "formatter": {
     "enabled": true,

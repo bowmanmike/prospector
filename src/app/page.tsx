@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { vaultStorage } from "@/lib/storage";
 
 export default function Home() {
@@ -14,20 +14,22 @@ export default function Home() {
       const vaultSettings = await vaultStorage.getVaultSettings();
       if (vaultSettings) {
         setSelectedPath(vaultSettings.name);
-        
+
         // Defer validation to avoid blocking the UI
         setTimeout(async () => {
           try {
-            const isValid = await vaultStorage.isValidObsidianVault(vaultSettings.files);
+            const isValid = await vaultStorage.isValidObsidianVault(
+              vaultSettings.files,
+            );
             setIsValidVault(isValid);
           } catch (error) {
-            console.error('Error validating vault:', error);
+            console.error("Error validating vault:", error);
             setIsValidVault(false);
           }
         }, 0);
       }
     } catch (error) {
-      console.error('Error loading existing vault:', error);
+      console.error("Error loading existing vault:", error);
     } finally {
       setIsLoading(false);
     }
@@ -37,22 +39,24 @@ export default function Home() {
     loadExistingVault();
   }, [loadExistingVault]);
 
-  const handleDirectorySelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDirectorySelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = event.target.files;
     if (files && files.length > 0) {
       const firstFile = files[0];
-      const pathParts = firstFile.webkitRelativePath.split('/');
+      const pathParts = firstFile.webkitRelativePath.split("/");
       const directoryPath = pathParts[0];
-      
+
       setSelectedPath(directoryPath);
-      
+
       // Basic validation for Obsidian vault
-      const hasObsidianFolder = Array.from(files).some(file => 
-        file.webkitRelativePath.includes('/.obsidian/')
+      const hasObsidianFolder = Array.from(files).some((file) =>
+        file.webkitRelativePath.includes("/.obsidian/"),
       );
-      
+
       setIsValidVault(hasObsidianFolder);
-      
+
       // Save to IndexedDB for persistence
       await vaultStorage.saveVaultFiles(files, directoryPath);
     }
@@ -68,10 +72,9 @@ export default function Home() {
       setSelectedPath("");
       setIsValidVault(null);
     } catch (error) {
-      console.error('Error clearing directory:', error);
+      console.error("Error clearing directory:", error);
     }
   };
-
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-background text-foreground">
@@ -87,17 +90,18 @@ export default function Home() {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Connect Your Vault</h2>
             <p className="text-muted-foreground">
-              {selectedPath 
+              {selectedPath
                 ? "Your vault is connected and ready to use"
-                : "Select your Obsidian vault directory to get started"
-              }
+                : "Select your Obsidian vault directory to get started"}
             </p>
           </div>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-muted-foreground">Loading existing vault...</span>
+              <span className="ml-2 text-muted-foreground">
+                Loading existing vault...
+              </span>
             </div>
           ) : (
             <div className="space-y-4">
@@ -110,7 +114,7 @@ export default function Home() {
                 className="hidden"
                 onChange={handleDirectorySelect}
               />
-              
+
               {!selectedPath ? (
                 <>
                   <button
@@ -120,9 +124,10 @@ export default function Home() {
                   >
                     Select Vault Directory
                   </button>
-                  
+
                   <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                    Your browser will request permission to access files. This is required to read your vault.
+                    Your browser will request permission to access files. This
+                    is required to read your vault.
                   </p>
                 </>
               ) : (
@@ -134,18 +139,23 @@ export default function Home() {
                         {selectedPath}
                       </code>
                     </div>
-                    
+
                     {isValidVault !== null && (
-                      <div className={`text-sm ${isValidVault ? 'text-green-600' : 'text-red-600'}`}>
+                      <div
+                        className={`text-sm ${isValidVault ? "text-green-600" : "text-red-600"}`}
+                      >
                         {isValidVault ? (
                           <span>✓ Valid Obsidian vault detected</span>
                         ) : (
-                          <span>⚠ No .obsidian folder found - this may not be a valid Obsidian vault</span>
+                          <span>
+                            ⚠ No .obsidian folder found - this may not be a
+                            valid Obsidian vault
+                          </span>
                         )}
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex gap-2 justify-center">
                     <button
                       type="button"
