@@ -11,9 +11,10 @@ Prospector is an AI-powered knowledge discovery tool for Obsidian vaults that he
 - **Frontend**: Next.js 15+ with TypeScript and App Router
 - **Styling**: Tailwind CSS v4 with custom CSS variables for theming
 - **Code Quality**: Biome for linting and formatting
+- **Testing**: Jest + React Testing Library with comprehensive unit tests
+- **Storage**: IndexedDB for vault metadata and file persistence
 - **Local LLM Integration**: Planned integration with Ollama or LM Studio
 - **Search**: Vector embeddings for semantic search (planned)
-- **Database**: Local SQLite for metadata and embeddings (planned)
 - **Deployment**: Docker/Docker Compose for local distribution (planned)
 
 ## Development Commands
@@ -56,11 +57,8 @@ npm test
 # Run tests in watch mode
 npm run test:watch
 
-# Run E2E tests
-npm run test:e2e
-
-# Run all tests
-npm run test:all
+# Run tests with coverage
+npm run test:coverage
 ```
 
 ## Key Technical Details
@@ -84,7 +82,18 @@ npm run test:all
 
 ## Project Status
 
-This is currently a fresh Next.js project with basic setup. The actual Prospector features (Obsidian vault integration, semantic search, local LLM integration) are planned but not yet implemented. See PROJECT_OVERVIEW.md for detailed user stories and implementation phases.
+**Current Implementation:**
+- ✅ Vault directory selection with persistent browser storage
+- ✅ Obsidian vault validation and error handling
+- ✅ IndexedDB storage layer with comprehensive testing
+- ✅ Responsive landing page with loading states and vault management
+
+**Upcoming Features:**
+- Parse markdown files with frontmatter support
+- Display basic vault statistics (note count, tag count)
+- Implement search functionality and semantic search with local LLM integration
+
+See PROJECT_OVERVIEW.md for detailed user stories and implementation phases.
 
 ## Development Notes
 
@@ -93,3 +102,33 @@ This is currently a fresh Next.js project with basic setup. The actual Prospecto
 - Obsidian-compatible markdown parsing will be required
 - Vector embeddings and semantic search are core features
 - Docker containerization planned for distribution
+
+## Previous Session Summary
+
+*This section should be updated at the end of each Claude Code session with a brief summary of what was accomplished. Replace this content with the current session's work.*
+
+### Session: 2025-01-09 - Vault Selection and Persistence
+
+**Key Accomplishments:**
+- **Vault Directory Selection**: Implemented landing page with file browser to select Obsidian vault directories
+- **IndexedDB Persistence**: Built comprehensive storage layer that persists vault connections across browser sessions
+- **Vault Validation**: Added automatic detection of valid Obsidian vaults (checks for .obsidian folder)
+- **Simplified Architecture**: Unified approach using webkitdirectory API for all browsers instead of complex File System Access API branching
+- **Performance Optimizations**: Addressed Firefox slowness with deferred validation and reduced data redundancy
+- **Comprehensive Testing**: Set up Jest + React Testing Library with 100% coverage for VaultStorage class
+
+**Technical Details:**
+- Built `VaultStorage` class with IndexedDB integration for persistent file metadata storage
+- Created responsive landing page with loading states, error handling, and vault management UI
+- Implemented vault clearing/changing functionality with proper state management
+- Added 14 comprehensive unit tests covering all storage operations and edge cases
+
+**Current Status:**
+- Phase 1, Task 1 of PROJECT_OVERVIEW.md is complete (Basic Vault Connection)
+- Users can select a vault directory once and it persists across browser sessions
+- Foundation is ready for next phase: parsing and displaying vault contents
+
+**Next Steps:**
+- Parse markdown files with frontmatter support
+- Display basic vault statistics (note count, tag count)
+- Begin implementing search functionality
