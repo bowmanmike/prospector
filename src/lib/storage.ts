@@ -12,7 +12,6 @@ interface VaultSettings {
 
 interface VaultFile {
   path: string;
-  relativePath: string;
   lastModified: number;
   size: number;
   type: string;
@@ -45,7 +44,6 @@ class VaultStorage {
     
     const vaultFiles: VaultFile[] = Array.from(files).map(file => ({
       path: file.webkitRelativePath,
-      relativePath: file.webkitRelativePath,
       lastModified: file.lastModified,
       size: file.size,
       type: file.type
@@ -112,8 +110,8 @@ class VaultStorage {
 
   async isValidObsidianVault(files: VaultFile[]): Promise<boolean> {
     return files.some(file => 
-      file.relativePath.includes('/.obsidian/') || 
-      file.relativePath.endsWith('/.obsidian')
+      file.path.includes('/.obsidian/') || 
+      file.path.endsWith('/.obsidian')
     );
   }
 

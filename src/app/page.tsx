@@ -15,9 +15,16 @@ export default function Home() {
       if (vaultSettings) {
         setSelectedPath(vaultSettings.name);
         
-        // Check if it's a valid Obsidian vault
-        const isValid = await vaultStorage.isValidObsidianVault(vaultSettings.files);
-        setIsValidVault(isValid);
+        // Defer validation to avoid blocking the UI
+        setTimeout(async () => {
+          try {
+            const isValid = await vaultStorage.isValidObsidianVault(vaultSettings.files);
+            setIsValidVault(isValid);
+          } catch (error) {
+            console.error('Error validating vault:', error);
+            setIsValidVault(false);
+          }
+        }, 0);
       }
     } catch (error) {
       console.error('Error loading existing vault:', error);
