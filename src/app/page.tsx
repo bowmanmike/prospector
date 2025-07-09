@@ -6,30 +6,18 @@ import { vaultStorage } from "@/lib/storage";
 export default function Home() {
   const [selectedPath, setSelectedPath] = useState<string>("");
   const [isValidVault, setIsValidVault] = useState<boolean | null>(null);
-  const [_directoryHandle, setDirectoryHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadExistingVault = useCallback(async () => {
     try {
-      const handle = await vaultStorage.getDirectoryHandle();
-      if (handle) {
-        const hasAccess = await vaultStorage.verifyDirectoryAccess(handle);
-        if (hasAccess) {
-          setDirectoryHandle(handle);
-          setSelectedPath(handle.name);
-          
-          // Check if it's still a valid Obsidian vault
-          try {
-            await handle.getDirectoryHandle('.obsidian');
-            setIsValidVault(true);
-          } catch {
-            setIsValidVault(false);
-          }
-        } else {
-          // Clear invalid handle
-          await vaultStorage.clearDirectoryHandle();
-        }
+      const vaultSettings = await vaultStorage.getVaultSettings();
+      if (vaultSettings) {
+        setSelectedPath(vaultSettings.name);
+        
+        // Check if it's a valid Obsidian vault
+        const isValid = await vaultStorage.isValidObsidianVault(vaultSettings.files);
+        setIsValidVault(isValid);
       }
     } catch (error) {
       console.error('Error loading existing vault:', error);
@@ -42,7 +30,7 @@ export default function Home() {
     loadExistingVault();
   }, [loadExistingVault]);
 
-  const handleDirectorySelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDirectorySelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
       const firstFile = files[0];
@@ -57,41 +45,19 @@ export default function Home() {
       );
       
       setIsValidVault(hasObsidianFolder);
+      
+      // Save to IndexedDB for persistence
+      await vaultStorage.saveVaultFiles(files, directoryPath);
     }
   };
 
-  const handleModernDirectorySelect = async () => {
-    try {
-      // Use File System Access API if available
-      if ('showDirectoryPicker' in window) {
-        const handle = await (window as unknown as { showDirectoryPicker: () => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker();
-        setDirectoryHandle(handle);
-        setSelectedPath(handle.name);
-        
-        // Check for .obsidian folder
-        try {
-          await handle.getDirectoryHandle('.obsidian');
-          setIsValidVault(true);
-        } catch {
-          setIsValidVault(false);
-        }
-        
-        // Save to IndexedDB for persistence
-        await vaultStorage.saveDirectoryHandle(handle);
-      } else {
-        // Fallback to traditional file input
-        fileInputRef.current?.click();
-      }
-    } catch (_error) {
-      // User cancelled or error occurred
-      console.log('Directory selection cancelled');
-    }
+  const handleSelectClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleClearDirectory = async () => {
     try {
-      await vaultStorage.clearDirectoryHandle();
-      setDirectoryHandle(null);
+      await vaultStorage.clearVaultSettings();
       setSelectedPath("");
       setIsValidVault(null);
     } catch (error) {
@@ -99,7 +65,6 @@ export default function Home() {
     }
   };
 
-  const supportsModernAPI = typeof window !== 'undefined' && 'showDirectoryPicker' in window;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-background text-foreground">
@@ -143,17 +108,15 @@ export default function Home() {
                 <>
                   <button
                     type="button"
-                    onClick={handleModernDirectorySelect}
+                    onClick={handleSelectClick}
                     className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                   >
                     Select Vault Directory
                   </button>
                   
-                  {!supportsModernAPI && (
-                    <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                      Your browser will request permission to access files. This is required to read your vault.
-                    </p>
-                  )}
+                  <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                    Your browser will request permission to access files. This is required to read your vault.
+                  </p>
                 </>
               ) : (
                 <div className="space-y-4">
@@ -179,7 +142,7 @@ export default function Home() {
                   <div className="flex gap-2 justify-center">
                     <button
                       type="button"
-                      onClick={handleModernDirectorySelect}
+                      onClick={handleSelectClick}
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                     >
                       Change Vault

@@ -4,9 +4,18 @@ const STORE_NAME = 'vault-settings';
 
 interface VaultSettings {
   id: string;
-  directoryHandle: FileSystemDirectoryHandle;
+  directoryPath: string;
   name: string;
+  files: VaultFile[];
   lastAccessed: number;
+}
+
+interface VaultFile {
+  path: string;
+  relativePath: string;
+  lastModified: number;
+  size: number;
+  type: string;
 }
 
 class VaultStorage {
@@ -31,13 +40,22 @@ class VaultStorage {
     });
   }
 
-  async saveDirectoryHandle(handle: FileSystemDirectoryHandle): Promise<void> {
+  async saveVaultFiles(files: FileList, directoryName: string): Promise<void> {
     if (!this.db) await this.init();
+    
+    const vaultFiles: VaultFile[] = Array.from(files).map(file => ({
+      path: file.webkitRelativePath,
+      relativePath: file.webkitRelativePath,
+      lastModified: file.lastModified,
+      size: file.size,
+      type: file.type
+    }));
     
     const settings: VaultSettings = {
       id: 'current-vault',
-      directoryHandle: handle,
-      name: handle.name,
+      directoryPath: directoryName,
+      name: directoryName,
+      files: vaultFiles,
       lastAccessed: Date.now()
     };
 
@@ -55,7 +73,7 @@ class VaultStorage {
     });
   }
 
-  async getDirectoryHandle(): Promise<FileSystemDirectoryHandle | null> {
+  async getVaultSettings(): Promise<VaultSettings | null> {
     if (!this.db) await this.init();
     
     return new Promise((resolve, reject) => {
@@ -70,12 +88,12 @@ class VaultStorage {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         const result = request.result as VaultSettings | undefined;
-        resolve(result?.directoryHandle || null);
+        resolve(result || null);
       };
     });
   }
 
-  async clearDirectoryHandle(): Promise<void> {
+  async clearVaultSettings(): Promise<void> {
     if (!this.db) await this.init();
     
     return new Promise((resolve, reject) => {
@@ -92,19 +110,16 @@ class VaultStorage {
     });
   }
 
-  async verifyDirectoryAccess(handle: FileSystemDirectoryHandle): Promise<boolean> {
-    try {
-      const permission = await handle.queryPermission({ mode: 'read' });
-      if (permission === 'granted') {
-        return true;
-      }
-      
-      // Try to request permission if not granted
-      const requestPermission = await handle.requestPermission({ mode: 'read' });
-      return requestPermission === 'granted';
-    } catch (_error) {
-      return false;
-    }
+  async isValidObsidianVault(files: VaultFile[]): Promise<boolean> {
+    return files.some(file => 
+      file.relativePath.includes('/.obsidian/') || 
+      file.relativePath.endsWith('/.obsidian')
+    );
+  }
+
+  async getVaultFiles(): Promise<VaultFile[]> {
+    const settings = await this.getVaultSettings();
+    return settings?.files || [];
   }
 }
 
