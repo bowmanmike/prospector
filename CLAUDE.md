@@ -107,28 +107,35 @@ See PROJECT_OVERVIEW.md for detailed user stories and implementation phases.
 
 *This section should be updated at the end of each Claude Code session with a brief summary of what was accomplished. Replace this content with the current session's work.*
 
-### Session: 2025-01-09 - Vault Selection and Persistence
+### Session: 2025-07-16 - SQLite Database Layer Implementation
 
 **Key Accomplishments:**
-- **Vault Directory Selection**: Implemented landing page with file browser to select Obsidian vault directories
-- **IndexedDB Persistence**: Built comprehensive storage layer that persists vault connections across browser sessions
-- **Vault Validation**: Added automatic detection of valid Obsidian vaults (checks for .obsidian folder)
-- **Simplified Architecture**: Unified approach using webkitdirectory API for all browsers instead of complex File System Access API branching
-- **Performance Optimizations**: Addressed Firefox slowness with deferred validation and reduced data redundancy
-- **Comprehensive Testing**: Set up Jest + React Testing Library with 100% coverage for VaultStorage class
+- **Storage Architecture Design**: Established files-first architecture with hybrid storage strategy (IndexedDB for UI state, SQLite for content metadata)
+- **Complete Database Schema**: Created comprehensive schema for vaults, notes, tags, and relationships with proper indexing
+- **Type-Safe Query Layer**: Implemented VaultQueries, NoteQueries, and TagQueries classes with full CRUD operations
+- **Transaction Support**: Added atomic operations with rollback on failure for data consistency
+- **Comprehensive Testing**: Built test suite with 59 passing tests covering all database operations and edge cases
+- **Database Infrastructure**: Set up connection management, initialization, and migration system
 
 **Technical Details:**
-- Built `VaultStorage` class with IndexedDB integration for persistent file metadata storage
-- Created responsive landing page with loading states, error handling, and vault management UI
-- Implemented vault clearing/changing functionality with proper state management
-- Added 14 comprehensive unit tests covering all storage operations and edge cases
+- Built SQLite3 integration with promisified interface and proper error handling
+- Created database schema with foreign key constraints and performance indexes
+- Implemented query classes with search capabilities, statistics, and tag management
+- Added transaction wrapper for batch operations and data integrity
+- Created isolated test database utilities with cleanup and mock data
+
+**Architecture Decisions:**
+- **Files as Source of Truth**: Markdown files remain authoritative, database stores only metadata
+- **Hybrid Storage**: Browser storage for vault paths/UI state, server storage for parsed content metadata
+- **On-Demand Processing**: Parse markdown files on-the-fly while caching metadata for performance
+- **Raw SQL**: Chose raw SQL over ORM for performance and flexibility with future vector search
 
 **Current Status:**
-- Phase 1, Task 1 of PROJECT_OVERVIEW.md is complete (Basic Vault Connection)
-- Users can select a vault directory once and it persists across browser sessions
-- Foundation is ready for next phase: parsing and displaying vault contents
+- Database layer is complete with full test coverage
+- Ready for Next.js API routes and markdown parsing integration
+- Foundation established for search functionality and semantic features
 
 **Next Steps:**
-- Parse markdown files with frontmatter support
-- Display basic vault statistics (note count, tag count)
-- Begin implementing search functionality
+- Create Next.js API routes for vault operations and note management
+- Implement markdown parser with frontmatter support
+- Integrate parsing with SQLite storage via API layer

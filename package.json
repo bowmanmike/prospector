@@ -14,9 +14,11 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@types/sqlite3": "^3.1.11",
     "next": "15.3.5",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.1",

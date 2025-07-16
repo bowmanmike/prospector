@@ -41,3 +41,9 @@ yarn-error.log*
 next-env.d.ts
 
 .claude/settings.local.json
+
+# local database files
+/data/*.db
+/data/*.db-journal
+/data/*.db-wal
+/data/*.db-shm

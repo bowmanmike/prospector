@@ -37,7 +37,7 @@ notes' content and surface relevant connections automatically.
 
 **As a user, I want to connect my Obsidian vault so the app can read my notes**
 
-- [ ] File browser to select vault directory
+- [x] File browser to select vault directory
 - [ ] Parse markdown files with frontmatter
 - [ ] Handle Obsidian-specific syntax (wiki links, tags, etc.)
 - [ ] Display basic vault statistics (note count, tag count)
@@ -217,6 +217,38 @@ notes' content and surface relevant connections automatically.
 - Efficient vector storage and retrieval
 - Incremental indexing for large vaults
 - Search result ranking and relevance scoring
+
+### Storage Architecture
+
+#### Files as Source of Truth
+
+Prospector follows a **files-first architecture** where markdown files in your Obsidian vault remain the single source of truth. The application never modifies your vault files and always reads content directly from the filesystem on-demand. This ensures:
+
+- **No sync issues**: Files modified outside the app are immediately current
+- **Data integrity**: Your vault cannot become corrupted by application issues
+- **Portability**: Your knowledge base exists independently of the application
+- **Transparency**: You can always inspect, backup, and migrate your actual markdown files
+
+#### Hybrid Storage Strategy
+
+**Browser Storage (IndexedDB):**
+- Vault directory paths and connection state
+- User interface preferences and settings
+- Application state and configuration
+
+**Server Storage (SQLite):**
+- File metadata (path, modified time, size, hash)
+- Extracted frontmatter (tags, title, created date, custom fields)
+- Vector embeddings for semantic search
+- Computed statistics and search indices
+- Cache invalidation tracking
+
+**On-Demand Operations:**
+- Full markdown content parsing for display
+- Content processing for search and analysis
+- File system watching for change detection
+
+This architecture provides fast metadata queries and search capabilities while maintaining the filesystem as the authoritative source for all content.
 
 ### Data Storage
 
