@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Home from "../page";
 
@@ -24,10 +24,12 @@ describe("Home Component", () => {
   });
 
   describe("Initial Load", () => {
-    it("should render the main heading", () => {
+    it("should render the main heading", async () => {
       mockVaultStorage.getVaultSettings.mockResolvedValue(null);
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
         "Prospector",
@@ -44,18 +46,22 @@ describe("Home Component", () => {
         () => new Promise(() => {}),
       ); // Never resolves
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       expect(screen.getByText("Loading existing vault...")).toBeInTheDocument();
       expect(
-        screen.getByRole("progressbar", { hidden: true }),
-      ).toBeInTheDocument(); // spinner
+        screen.getByText("Loading existing vault...").previousElementSibling,
+      ).toHaveClass("animate-spin"); // spinner
     });
 
     it("should show vault selection UI when no vault exists", async () => {
       mockVaultStorage.getVaultSettings.mockResolvedValue(null);
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(
@@ -94,7 +100,9 @@ describe("Home Component", () => {
       mockVaultStorage.getVaultSettings.mockResolvedValue(mockSettings);
       mockVaultStorage.isValidObsidianVault.mockResolvedValue(true);
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(
@@ -127,7 +135,9 @@ describe("Home Component", () => {
       mockVaultStorage.getVaultSettings.mockResolvedValue(mockSettings);
       mockVaultStorage.isValidObsidianVault.mockResolvedValue(false);
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(
@@ -145,7 +155,9 @@ describe("Home Component", () => {
       mockVaultStorage.getVaultSettings.mockResolvedValue(null);
       mockVaultStorage.saveVaultFiles.mockResolvedValue();
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(
@@ -173,6 +185,7 @@ describe("Home Component", () => {
       Object.defineProperty(fileInput, "files", {
         value: mockFiles,
         writable: false,
+        configurable: true,
       });
 
       fireEvent.change(fileInput, { target: { files: mockFiles } });
@@ -194,7 +207,9 @@ describe("Home Component", () => {
       mockVaultStorage.getVaultSettings.mockResolvedValue(null);
       mockVaultStorage.saveVaultFiles.mockResolvedValue();
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(
@@ -216,6 +231,7 @@ describe("Home Component", () => {
       Object.defineProperty(fileInput, "files", {
         value: mockFiles,
         writable: false,
+        configurable: true,
       });
 
       fireEvent.change(fileInput, { target: { files: mockFiles } });
@@ -232,7 +248,9 @@ describe("Home Component", () => {
     it("should handle empty file selection", async () => {
       mockVaultStorage.getVaultSettings.mockResolvedValue(null);
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(
@@ -273,7 +291,9 @@ describe("Home Component", () => {
     });
 
     it("should show change vault and clear vault buttons when connected", async () => {
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(
@@ -289,7 +309,9 @@ describe("Home Component", () => {
       const user = userEvent.setup();
       mockVaultStorage.clearVaultSettings.mockResolvedValue();
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(
@@ -313,7 +335,9 @@ describe("Home Component", () => {
     it("should handle change vault action", async () => {
       const user = userEvent.setup();
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(
@@ -327,9 +351,8 @@ describe("Home Component", () => {
       await user.click(changeButton);
 
       // The file input should be accessible for new selection
-      const fileInput =
-        changeButton.parentElement?.querySelector('input[type="file"]');
-      expect(fileInput).toBeInTheDocument();
+      const fileInput = screen.getByDisplayValue("");
+      expect(fileInput).toHaveAttribute("type", "file");
     });
   });
 
@@ -344,7 +367,9 @@ describe("Home Component", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(
@@ -384,7 +409,9 @@ describe("Home Component", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(
@@ -420,7 +447,9 @@ describe("Home Component", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      render(<Home />);
+      await act(async () => {
+        render(<Home />);
+      });
 
       await waitFor(() => {
         expect(screen.getByText("test-vault")).toBeInTheDocument();
