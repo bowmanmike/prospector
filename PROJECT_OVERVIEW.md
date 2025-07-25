@@ -250,6 +250,34 @@ Prospector follows a **files-first architecture** where markdown files in your O
 
 This architecture provides fast metadata queries and search capabilities while maintaining the filesystem as the authoritative source for all content.
 
+#### Three-Layer Architecture
+
+The application follows a clean three-layer architecture pattern:
+
+**1. Database Layer (`src/lib/database/queries/`)**
+- Raw SQL queries and database operations
+- VaultQueries, NoteQueries, TagQueries classes
+- Type-safe database interfaces
+- Transaction support and error handling
+
+**2. Business Logic Layer (`src/app/api/*/handlers.ts`)**
+- Pure functions that implement domain logic
+- Database-agnostic business rules and validation
+- Returns domain types, throws domain exceptions
+- Pre-initialized with database connection for performance
+
+**3. HTTP/API Layer (`src/app/api/*/route.ts`)**
+- Next.js API routes handling HTTP concerns
+- Request/response parsing and formatting
+- HTTP status code mapping
+- Error handling and JSON serialization
+
+This separation ensures:
+- **Testability**: Each layer can be tested independently
+- **Performance**: Database connections established once at boot
+- **Maintainability**: Clear separation of concerns
+- **Flexibility**: Business logic independent of HTTP framework
+
 ### Data Storage
 
 - SQLite for metadata, embeddings, and search indices
@@ -304,6 +332,18 @@ periodically pull changes, never push from dev
 - [ ] Test file operations on replica first
 - [ ] Backup your main vault before any major testing
 - [ ] Keep dev environment clearly separated from production
+
+## Current TODOs
+
+### High Priority
+1. **Fix API route tests**: Resolve NextRequest mocking issues in Jest tests
+2. **Fix Next.js 15 warning**: Handle async `params` in dynamic routes (`/api/vaults/[id]`)
+3. **Consolidate handler files**: Combine `handlers.ts` and `handlers-instance.ts` for cleaner structure
+
+### Medium Priority
+- Add comprehensive error handling for file system operations
+- Implement proper logging system for debugging
+- Add integration tests for full API workflows
 
 ## Success Metrics
 

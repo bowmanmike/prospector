@@ -1,6 +1,7 @@
 import sqlite3 from "sqlite3";
 import { promisify } from "util";
 import path from "path";
+import fs from "fs";
 
 // Enable verbose mode for debugging
 sqlite3.verbose();
@@ -14,25 +15,70 @@ export interface Database {
 
 class DatabaseConnection {
   private db: sqlite3.Database | null = null;
+  private initialized = false;
 
   async connect(): Promise<Database> {
     if (this.db) {
       return this.wrapDatabase(this.db);
     }
 
-    const dbPath = path.join(process.cwd(), "data", "prospector.db");
+    // Ensure data directory exists
+    const dataDir = path.join(process.cwd(), "data");
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+
+    const dbPath = path.join(dataDir, "prospector.db");
     
     return new Promise((resolve, reject) => {
-      this.db = new sqlite3.Database(dbPath, (err) => {
+      this.db = new sqlite3.Database(dbPath, async (err) => {
         if (err) {
           reject(err);
           return;
         }
         
         console.log(`Connected to SQLite database at ${dbPath}`);
+        
+        // Initialize database schema if not already done
+        if (!this.initialized) {
+          try {
+            await this.initializeSchema();
+            this.initialized = true;
+          } catch (initError) {
+            reject(initError);
+            return;
+          }
+        }
+        
         resolve(this.wrapDatabase(this.db!));
       });
     });
+  }
+
+  private async initializeSchema(): Promise<void> {
+    if (!this.db) return;
+    
+    try {
+      // Read and execute schema file
+      const schemaPath = path.join(process.cwd(), "src", "lib", "database", "schema.sql");
+      const schema = fs.readFileSync(schemaPath, "utf8");
+      
+      // Split by semicolons and execute each statement
+      const statements = schema
+        .split(";")
+        .map(stmt => stmt.trim())
+        .filter(stmt => stmt.length > 0);
+      
+      const wrappedDb = this.wrapDatabase(this.db);
+      for (const statement of statements) {
+        await wrappedDb.run(statement);
+      }
+      
+      console.log("Database schema initialized successfully");
+    } catch (error) {
+      console.error("Failed to initialize database schema:", error);
+      throw error;
+    }
   }
 
   private wrapDatabase(db: sqlite3.Database): Database {

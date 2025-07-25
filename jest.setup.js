@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom'
 
+// Note: Removed global Request/Response mocks as they interfere with NextRequest
+
 // Mock IndexedDB for testing
 global.indexedDB = {
   open: jest.fn(),

@@ -87,6 +87,10 @@ npm run test:coverage
 - ✅ Obsidian vault validation and error handling
 - ✅ IndexedDB storage layer with comprehensive testing
 - ✅ Responsive landing page with loading states and vault management
+- ✅ Complete SQLite database layer with comprehensive testing
+- ✅ Three-layer architecture (Database → Business Logic → HTTP)
+- ✅ Full CRUD API for vault operations with pre-initialized handlers
+- ✅ Comprehensive business logic testing (11 passing tests)
 
 **Upcoming Features:**
 - Parse markdown files with frontmatter support
@@ -107,35 +111,46 @@ See PROJECT_OVERVIEW.md for detailed user stories and implementation phases.
 
 *This section should be updated at the end of each Claude Code session with a brief summary of what was accomplished. Replace this content with the current session's work.*
 
-### Session: 2025-07-16 - SQLite Database Layer Implementation
+### Session: 2025-07-25 - Complete Vault API with Three-Layer Architecture
 
 **Key Accomplishments:**
-- **Storage Architecture Design**: Established files-first architecture with hybrid storage strategy (IndexedDB for UI state, SQLite for content metadata)
-- **Complete Database Schema**: Created comprehensive schema for vaults, notes, tags, and relationships with proper indexing
-- **Type-Safe Query Layer**: Implemented VaultQueries, NoteQueries, and TagQueries classes with full CRUD operations
-- **Transaction Support**: Added atomic operations with rollback on failure for data consistency
-- **Comprehensive Testing**: Built test suite with 59 passing tests covering all database operations and edge cases
-- **Database Infrastructure**: Set up connection management, initialization, and migration system
+- **Three-Layer Architecture**: Implemented clean separation between Database → Business Logic → HTTP layers
+- **Pre-Initialized Handlers**: Created performance-optimized handler system with database connection at boot time
+- **Complete Vault CRUD API**: Built full REST API for vault operations (GET, POST, DELETE) with proper HTTP status codes
+- **Comprehensive Testing**: Added 11 passing tests for business logic layer using real SQLite databases
+- **Manual API Testing**: Verified all endpoints work correctly with proper error handling and validation
 
-**Technical Details:**
-- Built SQLite3 integration with promisified interface and proper error handling
-- Created database schema with foreign key constraints and performance indexes
-- Implemented query classes with search capabilities, statistics, and tag management
-- Added transaction wrapper for batch operations and data integrity
-- Created isolated test database utilities with cleanup and mock data
+**Technical Implementation:**
+- **Database Layer**: VaultQueries classes with raw SQL and type safety
+- **Business Logic Layer**: Pure handler functions with domain validation and error handling
+- **HTTP Layer**: Next.js API routes handling only HTTP concerns (request parsing, status codes, JSON responses)
+- **Handler Initialization**: Singleton pattern with lazy initialization and explicit dependency injection for testing
+- **Real Database Testing**: Used actual SQLite databases in tests instead of complex mocking
 
-**Architecture Decisions:**
-- **Files as Source of Truth**: Markdown files remain authoritative, database stores only metadata
-- **Hybrid Storage**: Browser storage for vault paths/UI state, server storage for parsed content metadata
-- **On-Demand Processing**: Parse markdown files on-the-fly while caching metadata for performance
-- **Raw SQL**: Chose raw SQL over ORM for performance and flexibility with future vector search
+**Architecture Benefits:**
+- **Performance**: Database connection established once at boot, not per request
+- **Testability**: Each layer tested independently with clear boundaries
+- **Maintainability**: Business logic completely separate from HTTP and database concerns
+- **Type Safety**: Full TypeScript coverage with proper error handling
+
+**API Endpoints Implemented:**
+- `GET /api/vaults` - List all vaults
+- `POST /api/vaults` - Create vault with validation and duplicate checking
+- `GET /api/vaults/[id]` - Get vault details with statistics
+- `DELETE /api/vaults/[id]` - Delete vault with existence validation
 
 **Current Status:**
-- Database layer is complete with full test coverage
-- Ready for Next.js API routes and markdown parsing integration
-- Foundation established for search functionality and semantic features
+- Vault API is fully functional and manually tested
+- Business logic has comprehensive test coverage
+- Clean architecture established for future features
+- Ready for markdown parsing and note management APIs
+
+**Outstanding TODOs:**
+1. Fix API route HTTP tests (NextRequest mocking issues)
+2. Address Next.js 15 async params warning in dynamic routes
+3. Consider consolidating handlers.ts and handlers-instance.ts files
 
 **Next Steps:**
-- Create Next.js API routes for vault operations and note management
-- Implement markdown parser with frontmatter support
-- Integrate parsing with SQLite storage via API layer
+- Resolve remaining test issues and Next.js warnings
+- Implement markdown parsing with frontmatter support
+- Create note management API using the same three-layer pattern
