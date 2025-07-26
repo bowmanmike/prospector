@@ -2,6 +2,43 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Development Guidelines & Expectations
+
+### Code Quality Standards
+
+**MANDATORY: Pre-commit Quality Checks**
+- **ALWAYS run `npm run fix` before any commit** to ensure consistent linting and formatting
+- **NEVER commit with failing tests** - All tests must pass (75/75) before any feature is considered complete
+- **NEVER commit with linting errors or warnings** - The codebase must maintain zero linting issues
+- Run `npm test && npm run lint` to verify quality before any commit
+
+### Decision Making & Technical Discussions
+
+**Critical Thinking Expected**
+- **Push back on user suggestions** when they may not be optimal solutions
+- **Justify technical decisions in detail** - explain trade-offs, alternatives, and reasoning
+- **Don't just agree** - Challenge approaches and suggest better alternatives when appropriate
+- **Consider long-term maintainability** over quick fixes
+- **Question architectural choices** that might introduce complexity or technical debt
+
+Examples of good pushback:
+- "That approach might work, but have you considered X? It would provide Y benefits and avoid Z risks"
+- "I understand the request, but this could lead to [specific problem]. Here's an alternative that achieves the same goal"
+- "While that's possible, it goes against [established pattern/best practice]. Let me explain why and suggest a better approach"
+
+### Feature Completion Definition
+
+A feature is **ONLY complete** when:
+- ✅ All functionality works as specified
+- ✅ All existing tests continue to pass (75/75)
+- ✅ New functionality has appropriate test coverage
+- ✅ Zero linting errors or warnings (`npm run lint`)
+- ✅ Code is properly formatted (`npm run fix`)
+- ✅ Documentation is updated to reflect changes
+- ✅ No console errors or warnings in development
+
+**NO EXCEPTIONS** - Failing tests or linting issues mean the feature is incomplete, regardless of functional requirements.
+
 ## Project Overview
 
 Prospector is an AI-powered knowledge discovery tool for Obsidian vaults that helps users find, connect, and rediscover their notes through intelligent search and passive organization. It's built as a Next.js/TypeScript application that provides a search-first interface for existing Obsidian vaults, using local LLMs for content understanding and semantic search.
