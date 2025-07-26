@@ -1,15 +1,15 @@
+import fs from "node:fs";
+import path from "node:path";
+import { promisify } from "node:util";
 import sqlite3 from "sqlite3";
-import { promisify } from "util";
-import path from "path";
-import fs from "fs";
 
 // Enable verbose mode for debugging
 sqlite3.verbose();
 
 export interface Database {
-  run: (sql: string, params?: any[]) => Promise<sqlite3.RunResult>;
-  get: <T = any>(sql: string, params?: any[]) => Promise<T | undefined>;
-  all: <T = any>(sql: string, params?: any[]) => Promise<T[]>;
+  run: (sql: string, params?: unknown[]) => Promise<sqlite3.RunResult>;
+  get: <T = unknown>(sql: string, params?: unknown[]) => Promise<T | undefined>;
+  all: <T = unknown>(sql: string, params?: unknown[]) => Promise<T[]>;
   close: () => Promise<void>;
 }
 
@@ -29,16 +29,16 @@ class DatabaseConnection {
     }
 
     const dbPath = path.join(dataDir, "prospector.db");
-    
+
     return new Promise((resolve, reject) => {
       this.db = new sqlite3.Database(dbPath, async (err) => {
         if (err) {
           reject(err);
           return;
         }
-        
+
         console.log(`Connected to SQLite database at ${dbPath}`);
-        
+
         // Initialize database schema if not already done
         if (!this.initialized) {
           try {
@@ -49,31 +49,39 @@ class DatabaseConnection {
             return;
           }
         }
-        
-        resolve(this.wrapDatabase(this.db!));
+
+        if (this.db) {
+          resolve(this.wrapDatabase(this.db));
+        }
       });
     });
   }
 
   private async initializeSchema(): Promise<void> {
     if (!this.db) return;
-    
+
     try {
       // Read and execute schema file
-      const schemaPath = path.join(process.cwd(), "src", "lib", "database", "schema.sql");
+      const schemaPath = path.join(
+        process.cwd(),
+        "src",
+        "lib",
+        "database",
+        "schema.sql",
+      );
       const schema = fs.readFileSync(schemaPath, "utf8");
-      
+
       // Split by semicolons and execute each statement
       const statements = schema
         .split(";")
-        .map(stmt => stmt.trim())
-        .filter(stmt => stmt.length > 0);
-      
+        .map((stmt) => stmt.trim())
+        .filter((stmt) => stmt.length > 0);
+
       const wrappedDb = this.wrapDatabase(this.db);
       for (const statement of statements) {
         await wrappedDb.run(statement);
       }
-      
+
       console.log("Database schema initialized successfully");
     } catch (error) {
       console.error("Failed to initialize database schema:", error);
@@ -83,9 +91,9 @@ class DatabaseConnection {
 
   private wrapDatabase(db: sqlite3.Database): Database {
     return {
-      run: (sql: string, params?: any[]) => {
+      run: (sql: string, params?: unknown[]) => {
         return new Promise((resolve, reject) => {
-          db.run(sql, params || [], function(err) {
+          db.run(sql, params || [], function (err) {
             if (err) {
               reject(err);
             } else {

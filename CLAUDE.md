@@ -12,7 +12,7 @@ Prospector is an AI-powered knowledge discovery tool for Obsidian vaults that he
 - **Styling**: Tailwind CSS v4 with custom CSS variables for theming
 - **Code Quality**: Biome for linting and formatting
 - **Testing**: Jest + React Testing Library with comprehensive unit tests
-- **Storage**: IndexedDB for vault metadata and file persistence
+- **Storage**: SQLite for vault metadata and file persistence
 - **Local LLM Integration**: Planned integration with Ollama or LM Studio
 - **Search**: Vector embeddings for semantic search (planned)
 - **Deployment**: Docker/Docker Compose for local distribution (planned)
@@ -85,7 +85,7 @@ npm run test:coverage
 **Current Implementation:**
 - ✅ Vault directory selection with persistent browser storage
 - ✅ Obsidian vault validation and error handling
-- ✅ IndexedDB storage layer with comprehensive testing
+- ✅ SQLite database layer with comprehensive testing
 - ✅ Responsive landing page with loading states and vault management
 - ✅ Complete SQLite database layer with comprehensive testing
 - ✅ Three-layer architecture (Database → Business Logic → HTTP)
@@ -111,46 +111,57 @@ See PROJECT_OVERVIEW.md for detailed user stories and implementation phases.
 
 *This section should be updated at the end of each Claude Code session with a brief summary of what was accomplished. Replace this content with the current session's work.*
 
-### Session: 2025-07-25 - Complete Vault API with Three-Layer Architecture
+### Session: 2025-07-26 - Modernize Architecture & Fix All Linting Issues
 
 **Key Accomplishments:**
-- **Three-Layer Architecture**: Implemented clean separation between Database → Business Logic → HTTP layers
-- **Pre-Initialized Handlers**: Created performance-optimized handler system with database connection at boot time
-- **Complete Vault CRUD API**: Built full REST API for vault operations (GET, POST, DELETE) with proper HTTP status codes
-- **Comprehensive Testing**: Added 11 passing tests for business logic layer using real SQLite databases
-- **Manual API Testing**: Verified all endpoints work correctly with proper error handling and validation
+- **Architecture Modernization**: Successfully migrated from API routes to Next.js 15 Server Actions for better performance and developer experience
+- **Complete IndexedDB Removal**: Eliminated all IndexedDB code and references, simplifying to SQLite-only architecture
+- **Code Quality Improvements**: Fixed all linting and formatting issues (Node.js imports, type safety, unused variables)
+- **Test Infrastructure Cleanup**: Reorganized test utilities and ensured all 75 tests pass after migration
+- **Handler Consolidation**: Merged redundant handler files into clean, maintainable structure
 
-**Technical Implementation:**
-- **Database Layer**: VaultQueries classes with raw SQL and type safety
-- **Business Logic Layer**: Pure handler functions with domain validation and error handling
-- **HTTP Layer**: Next.js API routes handling only HTTP concerns (request parsing, status codes, JSON responses)
-- **Handler Initialization**: Singleton pattern with lazy initialization and explicit dependency injection for testing
-- **Real Database Testing**: Used actual SQLite databases in tests instead of complex mocking
+**Technical Changes:**
+- **Server Actions Migration**: Replaced REST API routes with Next.js Server Actions (`createVault`, `getVaults`, `deleteVault`, `getVaultWithStats`)
+- **Frontend Integration**: Updated React components to use Server Actions with `useTransition` for loading states
+- **Type Safety Enhancements**: Replaced `any` types with `unknown`, fixed null assertions, improved TypeScript compliance
+- **Import Modernization**: Updated all Node.js imports to use `node:` protocol (`node:fs`, `node:path`, `node:util`)
+- **Test Utilities Reorganization**: Moved shared test utilities from `__tests__/` to proper location (`src/lib/database/test-utils.ts`)
 
 **Architecture Benefits:**
-- **Performance**: Database connection established once at boot, not per request
-- **Testability**: Each layer tested independently with clear boundaries
-- **Maintainability**: Business logic completely separate from HTTP and database concerns
-- **Type Safety**: Full TypeScript coverage with proper error handling
+- **Modern Next.js Patterns**: Using Server Actions instead of API routes aligns with Next.js 15 best practices
+- **Simplified Data Flow**: Direct server-side function calls eliminate HTTP layer complexity
+- **Better Performance**: Server Actions provide automatic loading states and optimistic updates
+- **Type Safety**: End-to-end TypeScript type safety from frontend to database
+- **Cleaner Testing**: Direct function testing instead of HTTP mocking
 
-**API Endpoints Implemented:**
-- `GET /api/vaults` - List all vaults
-- `POST /api/vaults` - Create vault with validation and duplicate checking
-- `GET /api/vaults/[id]` - Get vault details with statistics
-- `DELETE /api/vaults/[id]` - Delete vault with existence validation
+**Code Quality Results:**
+- **Linting**: ✅ Clean (0 errors, 0 warnings)
+- **Tests**: ✅ All passing (75/75 tests)
+- **Formatting**: ✅ Consistent across all files
+- **Type Safety**: ✅ Improved with `unknown` instead of `any`
+
+**Files Removed:**
+- All API route files (`src/app/api/vaults/`)
+- IndexedDB implementation (`src/lib/storage.ts` and tests)
+- Duplicate handler files (`handlers-instance.ts`)
+- Old test utilities in wrong location
+
+**Files Added:**
+- Server Actions (`src/app/actions/vault-actions.ts`)
+- Consolidated handlers (`src/lib/handlers/vault-handlers.ts`)
+- Properly located test utilities (`src/lib/database/test-utils.ts`)
 
 **Current Status:**
-- Vault API is fully functional and manually tested
-- Business logic has comprehensive test coverage
-- Clean architecture established for future features
-- Ready for markdown parsing and note management APIs
+- Modern Next.js 15 architecture with Server Actions
+- Clean, lint-free codebase with consistent formatting
+- Complete test coverage with proper organization
+- SQLite-only data persistence (no IndexedDB complexity)
+- Ready for markdown parsing and note management features
 
 **Outstanding TODOs:**
-1. Fix API route HTTP tests (NextRequest mocking issues)
-2. Address Next.js 15 async params warning in dynamic routes
-3. Consider consolidating handlers.ts and handlers-instance.ts files
+1. Implement proper logging system to replace console.* usage (low priority)
 
 **Next Steps:**
-- Resolve remaining test issues and Next.js warnings
 - Implement markdown parsing with frontmatter support
-- Create note management API using the same three-layer pattern
+- Create note management using the established Server Actions pattern
+- Add semantic search capabilities with local LLM integration

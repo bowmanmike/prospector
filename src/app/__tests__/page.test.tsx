@@ -1,22 +1,35 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import Home from "../page";
 
-// Mock the storage module
-jest.mock("@/lib/storage", () => ({
-  vaultStorage: {
-    getVaultSettings: jest.fn(),
-    saveVaultFiles: jest.fn(),
-    clearVaultSettings: jest.fn(),
-    isValidObsidianVault: jest.fn(),
-    getVaultFiles: jest.fn(),
-    init: jest.fn(),
-  },
+// Mock the Server Actions
+jest.mock("@/app/actions/vault-actions", () => ({
+  createVault: jest.fn(),
+  getVaults: jest.fn(),
+  deleteVault: jest.fn(),
 }));
 
-import { vaultStorage } from "@/lib/storage";
+import {
+  createVault,
+  deleteVault,
+  getVaults,
+} from "@/app/actions/vault-actions";
 
-const mockVaultStorage = vaultStorage as jest.Mocked<typeof vaultStorage>;
+const mockCreateVault = createVault as jest.MockedFunction<typeof createVault>;
+const mockGetVaults = getVaults as jest.MockedFunction<typeof getVaults>;
+const mockDeleteVault = deleteVault as jest.MockedFunction<typeof deleteVault>;
+
+const mockVault = {
+  id: 1,
+  name: "test-vault",
+  path: "test-vault",
+  created_at: "2023-01-01T00:00:00.000Z",
+};
 
 describe("Home Component", () => {
   beforeEach(() => {
@@ -25,7 +38,7 @@ describe("Home Component", () => {
 
   describe("Initial Load", () => {
     it("should render the main heading", async () => {
-      mockVaultStorage.getVaultSettings.mockResolvedValue(null);
+      mockGetVaults.mockResolvedValue({ success: true, data: [] });
 
       await act(async () => {
         render(<Home />);
@@ -42,22 +55,24 @@ describe("Home Component", () => {
     });
 
     it("should show loading state initially", async () => {
-      mockVaultStorage.getVaultSettings.mockImplementation(
-        () => new Promise(() => {}),
-      ); // Never resolves
+      mockGetVaults.mockImplementation(
+        () => new Promise(() => {}), // Never resolves
+      );
 
       await act(async () => {
         render(<Home />);
       });
 
-      expect(screen.getByText("Loading existing vault...")).toBeInTheDocument();
       expect(
-        screen.getByText("Loading existing vault...").previousElementSibling,
+        screen.getByText("Loading existing vaults..."),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Loading existing vaults...").previousElementSibling,
       ).toHaveClass("animate-spin"); // spinner
     });
 
     it("should show vault selection UI when no vault exists", async () => {
-      mockVaultStorage.getVaultSettings.mockResolvedValue(null);
+      mockGetVaults.mockResolvedValue({ success: true, data: [] });
 
       await act(async () => {
         render(<Home />);
@@ -65,75 +80,36 @@ describe("Home Component", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(
-            "Select your Obsidian vault directory to get started",
-          ),
+          screen.getByRole("button", { name: "Select Vault Directory" }),
         ).toBeInTheDocument();
       });
 
       expect(
-        screen.getByRole("button", { name: "Select Vault Directory" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "Your browser will request permission to access files. This is required to read your vault.",
-        ),
+        screen.getByText("Select your Obsidian vault directory to get started"),
       ).toBeInTheDocument();
     });
 
-    it("should load existing vault settings on mount", async () => {
-      const mockSettings = {
-        id: "current-vault",
-        directoryPath: "test-vault",
-        name: "test-vault",
-        files: [
-          {
-            path: "test-vault/.obsidian/config.json",
-            lastModified: 123,
-            size: 50,
-            type: "application/json",
-          },
-        ],
-        lastAccessed: 1234567890000,
-      };
-
-      mockVaultStorage.getVaultSettings.mockResolvedValue(mockSettings);
-      mockVaultStorage.isValidObsidianVault.mockResolvedValue(true);
+    it("should load existing vault on mount", async () => {
+      mockGetVaults.mockResolvedValue({ success: true, data: [mockVault] });
 
       await act(async () => {
         render(<Home />);
       });
 
       await waitFor(() => {
-        expect(
-          screen.getByText("Your vault is connected and ready to use"),
-        ).toBeInTheDocument();
+        expect(screen.getByText("test-vault")).toBeInTheDocument();
       });
 
-      expect(screen.getByText("test-vault")).toBeInTheDocument();
+      expect(
+        screen.getByText("Your vault is connected and ready to use"),
+      ).toBeInTheDocument();
       expect(
         screen.getByText("✓ Valid Obsidian vault detected"),
       ).toBeInTheDocument();
     });
 
-    it("should show invalid vault warning for non-Obsidian directories", async () => {
-      const mockSettings = {
-        id: "current-vault",
-        directoryPath: "invalid-vault",
-        name: "invalid-vault",
-        files: [
-          {
-            path: "invalid-vault/file.txt",
-            lastModified: 123,
-            size: 50,
-            type: "text/plain",
-          },
-        ],
-        lastAccessed: 1234567890000,
-      };
-
-      mockVaultStorage.getVaultSettings.mockResolvedValue(mockSettings);
-      mockVaultStorage.isValidObsidianVault.mockResolvedValue(false);
+    it("should handle loading error gracefully", async () => {
+      mockGetVaults.mockRejectedValue(new Error("Database error"));
 
       await act(async () => {
         render(<Home />);
@@ -141,19 +117,19 @@ describe("Home Component", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(
-            "⚠ No .obsidian folder found - this may not be a valid Obsidian vault",
-          ),
+          screen.getByText("Failed to load existing vaults"),
         ).toBeInTheDocument();
       });
     });
   });
 
   describe("Vault Selection", () => {
-    it("should handle directory selection", async () => {
-      const user = userEvent.setup();
-      mockVaultStorage.getVaultSettings.mockResolvedValue(null);
-      mockVaultStorage.saveVaultFiles.mockResolvedValue();
+    beforeEach(() => {
+      mockGetVaults.mockResolvedValue({ success: true, data: [] });
+    });
+
+    it("should handle directory selection with valid Obsidian vault", async () => {
+      mockCreateVault.mockResolvedValue({ success: true, data: mockVault });
 
       await act(async () => {
         render(<Home />);
@@ -165,48 +141,56 @@ describe("Home Component", () => {
         ).toBeInTheDocument();
       });
 
-      // Mock file selection
-      const fileInput = screen
-        .getByRole("button", { name: "Select Vault Directory" })
-        .parentElement?.querySelector('input[type="file"]');
-      expect(fileInput).toBeInTheDocument();
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
 
+      // Mock file selection with Obsidian vault
       const mockFiles = [
-        new File(["content"], "file1.md", {
-          webkitRelativePath: "test-vault/file1.md",
-          type: "text/markdown",
-        }),
-        new File(["{}"], ".obsidian/config.json", {
-          webkitRelativePath: "test-vault/.obsidian/config.json",
-          type: "application/json",
-        }),
+        new File([""], "config.json", { type: "application/json" }),
+        new File([""], "note.md", { type: "text/markdown" }),
       ];
 
-      Object.defineProperty(fileInput, "files", {
-        value: mockFiles,
+      // Add webkitRelativePath property to mock files
+      Object.defineProperty(mockFiles[0], "webkitRelativePath", {
+        value: "test-vault/.obsidian/config.json",
         writable: false,
-        configurable: true,
+      });
+      Object.defineProperty(mockFiles[1], "webkitRelativePath", {
+        value: "test-vault/note.md",
+        writable: false,
       });
 
-      fireEvent.change(fileInput, { target: { files: mockFiles } });
+      // Create a mock FileList
+      const mockFileList = {
+        0: mockFiles[0],
+        1: mockFiles[1],
+        length: 2,
+        item: (index: number) => mockFiles[index],
+        [Symbol.iterator]: function* () {
+          for (let i = 0; i < this.length; i++) {
+            yield this[i];
+          }
+        },
+      } as unknown as FileList;
+
+      await act(async () => {
+        fireEvent.change(fileInput, { target: { files: mockFileList } });
+      });
 
       await waitFor(() => {
-        expect(mockVaultStorage.saveVaultFiles).toHaveBeenCalledWith(
-          mockFiles,
-          "test-vault",
-        );
+        expect(mockCreateVault).toHaveBeenCalledWith({
+          name: "test-vault",
+          path: "test-vault",
+        });
       });
 
-      expect(screen.getByText("test-vault")).toBeInTheDocument();
-      expect(
-        screen.getByText("✓ Valid Obsidian vault detected"),
-      ).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText("test-vault")).toBeInTheDocument();
+      });
     });
 
     it("should detect invalid vault during selection", async () => {
-      mockVaultStorage.getVaultSettings.mockResolvedValue(null);
-      mockVaultStorage.saveVaultFiles.mockResolvedValue();
-
       await act(async () => {
         render(<Home />);
       });
@@ -217,36 +201,61 @@ describe("Home Component", () => {
         ).toBeInTheDocument();
       });
 
-      const fileInput = screen
-        .getByRole("button", { name: "Select Vault Directory" })
-        .parentElement?.querySelector('input[type="file"]');
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
 
-      const mockFiles = [
-        new File(["content"], "file1.txt", {
-          webkitRelativePath: "invalid-vault/file1.txt",
-          type: "text/plain",
-        }),
-      ];
+      // Mock file selection without .obsidian folder
+      const mockFiles = [new File([""], "note.md", { type: "text/markdown" })];
 
-      Object.defineProperty(fileInput, "files", {
-        value: mockFiles,
+      Object.defineProperty(mockFiles[0], "webkitRelativePath", {
+        value: "test-vault/note.md",
         writable: false,
-        configurable: true,
       });
 
-      fireEvent.change(fileInput, { target: { files: mockFiles } });
+      const mockFileList = {
+        0: mockFiles[0],
+        length: 1,
+        item: (index: number) => mockFiles[index],
+        [Symbol.iterator]: function* () {
+          for (let i = 0; i < this.length; i++) {
+            yield this[i];
+          }
+        },
+      } as unknown as FileList;
 
-      await waitFor(() => {
-        expect(
-          screen.getByText(
-            "⚠ No .obsidian folder found - this may not be a valid Obsidian vault",
-          ),
-        ).toBeInTheDocument();
+      await act(async () => {
+        fireEvent.change(fileInput, { target: { files: mockFileList } });
       });
+
+      // Should not call createVault for invalid vault
+      expect(mockCreateVault).not.toHaveBeenCalled();
     });
 
     it("should handle empty file selection", async () => {
-      mockVaultStorage.getVaultSettings.mockResolvedValue(null);
+      await act(async () => {
+        render(<Home />);
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: "Select Vault Directory" }),
+        ).toBeInTheDocument();
+      });
+
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+
+      await act(async () => {
+        fireEvent.change(fileInput, { target: { files: [] } });
+      });
+
+      expect(mockCreateVault).not.toHaveBeenCalled();
+    });
+
+    it("should handle create vault error", async () => {
+      mockCreateVault.mockRejectedValue(new Error("Vault already exists"));
 
       await act(async () => {
         render(<Home />);
@@ -258,36 +267,43 @@ describe("Home Component", () => {
         ).toBeInTheDocument();
       });
 
-      const fileInput = screen
-        .getByRole("button", { name: "Select Vault Directory" })
-        .parentElement?.querySelector('input[type="file"]');
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
 
-      fireEvent.change(fileInput, { target: { files: [] } });
+      const mockFiles = [
+        new File([""], "config.json", { type: "application/json" }),
+      ];
 
-      // Should not crash and should not save anything
-      expect(mockVaultStorage.saveVaultFiles).not.toHaveBeenCalled();
+      Object.defineProperty(mockFiles[0], "webkitRelativePath", {
+        value: "test-vault/.obsidian/config.json",
+        writable: false,
+      });
+
+      const mockFileList = {
+        0: mockFiles[0],
+        length: 1,
+        item: (index: number) => mockFiles[index],
+        [Symbol.iterator]: function* () {
+          for (let i = 0; i < this.length; i++) {
+            yield this[i];
+          }
+        },
+      } as unknown as FileList;
+
+      await act(async () => {
+        fireEvent.change(fileInput, { target: { files: mockFileList } });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("Vault already exists")).toBeInTheDocument();
+      });
     });
   });
 
   describe("Connected Vault Actions", () => {
-    beforeEach(async () => {
-      const mockSettings = {
-        id: "current-vault",
-        directoryPath: "test-vault",
-        name: "test-vault",
-        files: [
-          {
-            path: "test-vault/.obsidian/config.json",
-            lastModified: 123,
-            size: 50,
-            type: "application/json",
-          },
-        ],
-        lastAccessed: 1234567890000,
-      };
-
-      mockVaultStorage.getVaultSettings.mockResolvedValue(mockSettings);
-      mockVaultStorage.isValidObsidianVault.mockResolvedValue(true);
+    beforeEach(() => {
+      mockGetVaults.mockResolvedValue({ success: true, data: [mockVault] });
     });
 
     it("should show change vault and clear vault buttons when connected", async () => {
@@ -306,8 +322,10 @@ describe("Home Component", () => {
     });
 
     it("should handle vault clearing", async () => {
-      const user = userEvent.setup();
-      mockVaultStorage.clearVaultSettings.mockResolvedValue();
+      mockDeleteVault.mockResolvedValue({
+        success: true,
+        data: { deleted: true },
+      });
 
       await act(async () => {
         render(<Home />);
@@ -319,22 +337,25 @@ describe("Home Component", () => {
         ).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole("button", { name: "Clear Vault" }));
+      const clearButton = screen.getByRole("button", { name: "Clear Vault" });
 
-      expect(mockVaultStorage.clearVaultSettings).toHaveBeenCalled();
+      await act(async () => {
+        fireEvent.click(clearButton);
+      });
 
       await waitFor(() => {
+        expect(mockDeleteVault).toHaveBeenCalledWith(1);
+      });
+
+      // Should show vault selection again after clearing
+      await waitFor(() => {
         expect(
-          screen.getByText(
-            "Select your Obsidian vault directory to get started",
-          ),
+          screen.getByRole("button", { name: "Select Vault Directory" }),
         ).toBeInTheDocument();
       });
     });
 
     it("should handle change vault action", async () => {
-      const user = userEvent.setup();
-
       await act(async () => {
         render(<Home />);
       });
@@ -346,68 +367,26 @@ describe("Home Component", () => {
       });
 
       const changeButton = screen.getByRole("button", { name: "Change Vault" });
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
 
-      // Should trigger file input click
-      await user.click(changeButton);
-
-      // The file input should be accessible for new selection
-      const fileInput = screen.getByDisplayValue("");
-      expect(fileInput).toHaveAttribute("type", "file");
-    });
-  });
-
-  describe("Error Handling", () => {
-    it("should handle storage errors gracefully", async () => {
-      mockVaultStorage.getVaultSettings.mockRejectedValue(
-        new Error("Storage error"),
-      );
-
-      // Mock console.error to avoid test output noise
-      const consoleSpy = jest
-        .spyOn(console, "error")
+      // Mock the file input click
+      const clickSpy = jest
+        .spyOn(fileInput, "click")
         .mockImplementation(() => {});
 
       await act(async () => {
-        render(<Home />);
+        fireEvent.click(changeButton);
       });
 
-      await waitFor(() => {
-        expect(
-          screen.getByText(
-            "Select your Obsidian vault directory to get started",
-          ),
-        ).toBeInTheDocument();
-      });
+      expect(clickSpy).toHaveBeenCalled();
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Error loading existing vault:",
-        expect.any(Error),
-      );
-
-      consoleSpy.mockRestore();
+      clickSpy.mockRestore();
     });
 
     it("should handle clear vault errors", async () => {
-      const user = userEvent.setup();
-
-      // Set up connected state
-      const mockSettings = {
-        id: "current-vault",
-        directoryPath: "test-vault",
-        name: "test-vault",
-        files: [],
-        lastAccessed: 1234567890000,
-      };
-
-      mockVaultStorage.getVaultSettings.mockResolvedValue(mockSettings);
-      mockVaultStorage.isValidObsidianVault.mockResolvedValue(true);
-      mockVaultStorage.clearVaultSettings.mockRejectedValue(
-        new Error("Clear error"),
-      );
-
-      const consoleSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      mockDeleteVault.mockRejectedValue(new Error("Delete failed"));
 
       await act(async () => {
         render(<Home />);
@@ -419,51 +398,15 @@ describe("Home Component", () => {
         ).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole("button", { name: "Clear Vault" }));
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Error clearing directory:",
-        expect.any(Error),
-      );
-
-      consoleSpy.mockRestore();
-    });
-
-    it("should handle vault validation errors", async () => {
-      const mockSettings = {
-        id: "current-vault",
-        directoryPath: "test-vault",
-        name: "test-vault",
-        files: [],
-        lastAccessed: 1234567890000,
-      };
-
-      mockVaultStorage.getVaultSettings.mockResolvedValue(mockSettings);
-      mockVaultStorage.isValidObsidianVault.mockRejectedValue(
-        new Error("Validation error"),
-      );
-
-      const consoleSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const clearButton = screen.getByRole("button", { name: "Clear Vault" });
 
       await act(async () => {
-        render(<Home />);
+        fireEvent.click(clearButton);
       });
 
       await waitFor(() => {
-        expect(screen.getByText("test-vault")).toBeInTheDocument();
+        expect(screen.getByText("Delete failed")).toBeInTheDocument();
       });
-
-      // Should eventually show invalid state after validation error
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "Error validating vault:",
-          expect.any(Error),
-        );
-      });
-
-      consoleSpy.mockRestore();
     });
   });
 });

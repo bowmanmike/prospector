@@ -1,5 +1,5 @@
-import { Database } from "../index";
-import { Vault, CreateVaultInput, VaultStatistics } from "../types";
+import type { Database } from "../index";
+import type { CreateVaultInput, Vault, VaultStatistics } from "../types";
 
 export class VaultQueries {
   constructor(private db: Database) {}
@@ -7,12 +7,12 @@ export class VaultQueries {
   async create(input: CreateVaultInput): Promise<Vault> {
     const result = await this.db.run(
       `INSERT INTO vaults (path, name) VALUES (?, ?)`,
-      [input.path, input.name]
+      [input.path, input.name],
     );
 
     const vault = await this.db.get<Vault>(
       `SELECT * FROM vaults WHERE id = ?`,
-      [result.lastID]
+      [result.lastID],
     );
 
     if (!vault) {
@@ -25,7 +25,7 @@ export class VaultQueries {
   async getByPath(path: string): Promise<Vault | null> {
     const vault = await this.db.get<Vault>(
       `SELECT * FROM vaults WHERE path = ?`,
-      [path]
+      [path],
     );
 
     return vault || null;
@@ -34,22 +34,20 @@ export class VaultQueries {
   async getById(id: number): Promise<Vault | null> {
     const vault = await this.db.get<Vault>(
       `SELECT * FROM vaults WHERE id = ?`,
-      [id]
+      [id],
     );
 
     return vault || null;
   }
 
   async getAll(): Promise<Vault[]> {
-    return this.db.all<Vault>(
-      `SELECT * FROM vaults ORDER BY created_at DESC`
-    );
+    return this.db.all<Vault>(`SELECT * FROM vaults ORDER BY created_at DESC`);
   }
 
   async updateLastScanned(id: number): Promise<void> {
     await this.db.run(
       `UPDATE vaults SET last_scanned = CURRENT_TIMESTAMP WHERE id = ?`,
-      [id]
+      [id],
     );
   }
 
@@ -66,12 +64,12 @@ export class VaultQueries {
         MAX(modified_time) as last_modified
       FROM notes 
       WHERE vault_id = ?`,
-      [vaultId]
+      [vaultId],
     );
 
     const tagCount = await this.db.get<{ tag_count: number }>(
       `SELECT COUNT(*) as tag_count FROM tags WHERE vault_id = ?`,
-      [vaultId]
+      [vaultId],
     );
 
     return {

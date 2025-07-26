@@ -1,5 +1,5 @@
-import { setupTestDatabase, mockVault, mockNote } from "./test-utils";
-import { DatabaseQueries } from "../queries";
+import type { DatabaseQueries } from "../queries";
+import { mockNote, mockVault, setupTestDatabase } from "../test-utils";
 
 describe("DatabaseQueries Transaction Support", () => {
   let queries: DatabaseQueries;
@@ -22,7 +22,7 @@ describe("DatabaseQueries Transaction Support", () => {
         const note = await tx.notes.create({ ...mockNote, vault_id: vault.id });
         const tag = await tx.tags.create(vault.id, "test-tag");
         await tx.tags.linkToNote(note.id, tag.id);
-        
+
         return { vault, note, tag };
       });
 
@@ -45,18 +45,21 @@ describe("DatabaseQueries Transaction Support", () => {
         await queries.transaction(async (tx) => {
           const vault = await tx.vaults.create(mockVault);
           vaultId = vault.id;
-          
-          const note = await tx.notes.create({ ...mockNote, vault_id: vault.id });
-          
+
+          const _note = await tx.notes.create({
+            ...mockNote,
+            vault_id: vault.id,
+          });
+
           // This should cause an error (duplicate path)
           await tx.notes.create({ ...mockNote, vault_id: vault.id });
         });
-      } catch (error) {
+      } catch (_error) {
         // Expected to fail
       }
 
       // Verify rollback - vault should not exist
-      const vault = await queries.vaults.getById(vaultId!);
+      const vault = await queries.vaults.getById(vaultId);
       expect(vault).toBeNull();
     });
 
@@ -67,9 +70,9 @@ describe("DatabaseQueries Transaction Support", () => {
         await queries.transaction(async (tx) => {
           const vault = await tx.vaults.create(mockVault);
           vaultId = vault.id;
-          
+
           await tx.notes.create({ ...mockNote, vault_id: vault.id });
-          
+
           // Throw custom error
           throw new Error("Custom transaction error");
         });
@@ -79,19 +82,31 @@ describe("DatabaseQueries Transaction Support", () => {
       }
 
       // Verify rollback
-      const vault = await queries.vaults.getById(vaultId!);
+      const vault = await queries.vaults.getById(vaultId);
       expect(vault).toBeNull();
     });
 
     it("should handle nested operations in transaction", async () => {
       const result = await queries.transaction(async (tx) => {
         const vault = await tx.vaults.create(mockVault);
-        
+
         // Create multiple notes
         const notes = await Promise.all([
-          tx.notes.create({ ...mockNote, vault_id: vault.id, file_path: "/test/note1.md" }),
-          tx.notes.create({ ...mockNote, vault_id: vault.id, file_path: "/test/note2.md" }),
-          tx.notes.create({ ...mockNote, vault_id: vault.id, file_path: "/test/note3.md" }),
+          tx.notes.create({
+            ...mockNote,
+            vault_id: vault.id,
+            file_path: "/test/note1.md",
+          }),
+          tx.notes.create({
+            ...mockNote,
+            vault_id: vault.id,
+            file_path: "/test/note2.md",
+          }),
+          tx.notes.create({
+            ...mockNote,
+            vault_id: vault.id,
+            file_path: "/test/note3.md",
+          }),
         ]);
 
         // Create tags and link them
@@ -120,7 +135,7 @@ describe("DatabaseQueries Transaction Support", () => {
       expect(vault).toBeDefined();
       expect(notes).toHaveLength(3);
       expect(tags).toHaveLength(2);
-      
+
       // Each tag should be linked to 3 notes
       for (const tag of tags) {
         const updatedTag = await queries.tags.getById(tag.id);
@@ -131,7 +146,7 @@ describe("DatabaseQueries Transaction Support", () => {
     it("should handle vault statistics calculation in transaction", async () => {
       const result = await queries.transaction(async (tx) => {
         const vault = await tx.vaults.create(mockVault);
-        
+
         // Create notes with word counts
         await tx.notes.create({
           ...mockNote,
@@ -140,11 +155,11 @@ describe("DatabaseQueries Transaction Support", () => {
           word_count: 100,
           character_count: 500,
         });
-        
+
         await tx.notes.create({
           ...mockNote,
           vault_id: vault.id,
-          file_path: "/test/note2.md", 
+          file_path: "/test/note2.md",
           word_count: 200,
           character_count: 1000,
         });
@@ -166,7 +181,7 @@ describe("DatabaseQueries Transaction Support", () => {
 
     it("should return transaction result", async () => {
       const customResult = { success: true, message: "Transaction completed" };
-      
+
       const result = await queries.transaction(async (tx) => {
         await tx.vaults.create(mockVault);
         return customResult;

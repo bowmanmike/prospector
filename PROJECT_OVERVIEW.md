@@ -229,14 +229,12 @@ Prospector follows a **files-first architecture** where markdown files in your O
 - **Portability**: Your knowledge base exists independently of the application
 - **Transparency**: You can always inspect, backup, and migrate your actual markdown files
 
-#### Hybrid Storage Strategy
+#### Storage Strategy
 
-**Browser Storage (IndexedDB):**
-- Vault directory paths and connection state
+**SQLite Database:**
+- Vault directory paths and connection state  
 - User interface preferences and settings
 - Application state and configuration
-
-**Server Storage (SQLite):**
 - File metadata (path, modified time, size, hash)
 - Extracted frontmatter (tags, title, created date, custom fields)
 - Vector embeddings for semantic search
@@ -250,33 +248,34 @@ Prospector follows a **files-first architecture** where markdown files in your O
 
 This architecture provides fast metadata queries and search capabilities while maintaining the filesystem as the authoritative source for all content.
 
-#### Three-Layer Architecture
+#### Modern Next.js Architecture with Server Actions
 
-The application follows a clean three-layer architecture pattern:
+The application follows a clean three-layer architecture using Next.js 15 Server Actions:
 
 **1. Database Layer (`src/lib/database/queries/`)**
 - Raw SQL queries and database operations
-- VaultQueries, NoteQueries, TagQueries classes
+- VaultQueries, NoteQueries, TagQueries classes  
 - Type-safe database interfaces
 - Transaction support and error handling
 
-**2. Business Logic Layer (`src/app/api/*/handlers.ts`)**
+**2. Business Logic Layer (`src/lib/handlers/`)**
 - Pure functions that implement domain logic
 - Database-agnostic business rules and validation
 - Returns domain types, throws domain exceptions
 - Pre-initialized with database connection for performance
 
-**3. HTTP/API Layer (`src/app/api/*/route.ts`)**
-- Next.js API routes handling HTTP concerns
-- Request/response parsing and formatting
-- HTTP status code mapping
-- Error handling and JSON serialization
+**3. Server Actions Layer (`src/app/actions/`)**
+- Next.js 15 Server Actions for direct server-side function calls
+- Type-safe client-server communication
+- Automatic loading states and error handling
+- Built-in support for revalidation and caching
 
-This separation ensures:
-- **Testability**: Each layer can be tested independently
-- **Performance**: Database connections established once at boot
+This modern architecture provides:
+- **Better DX**: Direct function calls instead of HTTP routes
+- **Type Safety**: End-to-end TypeScript from frontend to database
+- **Performance**: Automatic optimizations and caching
+- **Testability**: Direct function testing without HTTP mocking
 - **Maintainability**: Clear separation of concerns
-- **Flexibility**: Business logic independent of HTTP framework
 
 ### Data Storage
 
@@ -336,14 +335,21 @@ periodically pull changes, never push from dev
 ## Current TODOs
 
 ### High Priority
-1. **Fix API route tests**: Resolve NextRequest mocking issues in Jest tests
-2. **Fix Next.js 15 warning**: Handle async `params` in dynamic routes (`/api/vaults/[id]`)
-3. **Consolidate handler files**: Combine `handlers.ts` and `handlers-instance.ts` for cleaner structure
+1. **Implement markdown parsing**: Add support for parsing markdown files with frontmatter extraction
+2. **Create note management**: Build note CRUD operations using Server Actions pattern
+3. **Add vault statistics**: Display note counts, tag counts, and file statistics in UI
 
 ### Medium Priority
+- **Multi-vault support**: Allow users to store and switch between multiple vaults (not simultaneous access, but vault selection/switching)
 - Add comprehensive error handling for file system operations
-- Implement proper logging system for debugging
-- Add integration tests for full API workflows
+- Implement proper logging system to replace console.* usage
+- Add integration tests for full Server Actions workflows
+- Implement file watching for vault changes
+
+### Low Priority
+- Add dark/light theme matching Obsidian
+- Implement keyboard shortcuts for power users
+- Add export/import settings functionality
 
 ## Success Metrics
 

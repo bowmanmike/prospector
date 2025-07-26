@@ -57,7 +57,7 @@ export interface CreateNoteInput {
   content_hash?: string;
   title?: string;
   frontmatter_tags?: string[];
-  frontmatter_data?: Record<string, any>;
+  frontmatter_data?: Record<string, unknown>;
   word_count?: number;
   character_count?: number;
 }
@@ -68,7 +68,7 @@ export interface UpdateNoteInput {
   content_hash?: string;
   title?: string;
   frontmatter_tags?: string[];
-  frontmatter_data?: Record<string, any>;
+  frontmatter_data?: Record<string, unknown>;
   word_count?: number;
   character_count?: number;
 }

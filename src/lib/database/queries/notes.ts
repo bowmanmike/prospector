@@ -1,5 +1,5 @@
-import { Database } from "../index";
-import { Note, CreateNoteInput, UpdateNoteInput } from "../types";
+import type { Database } from "../index";
+import type { CreateNoteInput, Note, UpdateNoteInput } from "../types";
 
 export class NoteQueries {
   constructor(private db: Database) {}
@@ -23,13 +23,12 @@ export class NoteQueries {
         input.frontmatter_data ? JSON.stringify(input.frontmatter_data) : null,
         input.word_count || null,
         input.character_count || null,
-      ]
+      ],
     );
 
-    const note = await this.db.get<Note>(
-      `SELECT * FROM notes WHERE id = ?`,
-      [result.lastID]
-    );
+    const note = await this.db.get<Note>(`SELECT * FROM notes WHERE id = ?`, [
+      result.lastID,
+    ]);
 
     if (!note) {
       throw new Error("Failed to create note");
@@ -39,10 +38,9 @@ export class NoteQueries {
   }
 
   async getById(id: number): Promise<Note | null> {
-    const note = await this.db.get<Note>(
-      `SELECT * FROM notes WHERE id = ?`,
-      [id]
-    );
+    const note = await this.db.get<Note>(`SELECT * FROM notes WHERE id = ?`, [
+      id,
+    ]);
 
     return note || null;
   }
@@ -50,7 +48,7 @@ export class NoteQueries {
   async getByPath(vaultId: number, filePath: string): Promise<Note | null> {
     const note = await this.db.get<Note>(
       `SELECT * FROM notes WHERE vault_id = ? AND file_path = ?`,
-      [vaultId, filePath]
+      [vaultId, filePath],
     );
 
     return note || null;
@@ -59,13 +57,13 @@ export class NoteQueries {
   async getByVault(vaultId: number): Promise<Note[]> {
     return this.db.all<Note>(
       `SELECT * FROM notes WHERE vault_id = ? ORDER BY modified_time DESC`,
-      [vaultId]
+      [vaultId],
     );
   }
 
   async update(id: number, input: UpdateNoteInput): Promise<Note> {
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     if (input.file_size !== undefined) {
       updates.push("file_size = ?");
@@ -108,7 +106,7 @@ export class NoteQueries {
 
     await this.db.run(
       `UPDATE notes SET ${updates.join(", ")} WHERE id = ?`,
-      values
+      values,
     );
 
     const note = await this.getById(id);
@@ -126,7 +124,7 @@ export class NoteQueries {
   async deleteByPath(vaultId: number, filePath: string): Promise<void> {
     await this.db.run(
       `DELETE FROM notes WHERE vault_id = ? AND file_path = ?`,
-      [vaultId, filePath]
+      [vaultId, filePath],
     );
   }
 
@@ -135,7 +133,7 @@ export class NoteQueries {
       `SELECT * FROM notes 
        WHERE vault_id = ? AND modified_time > ? 
        ORDER BY modified_time DESC`,
-      [vaultId, since]
+      [vaultId, since],
     );
   }
 
@@ -146,7 +144,7 @@ export class NoteQueries {
        WHERE vault_id = ? 
        AND (title LIKE ? OR file_name LIKE ? OR frontmatter_data LIKE ?)
        ORDER BY modified_time DESC`,
-      [vaultId, searchTerm, searchTerm, searchTerm]
+      [vaultId, searchTerm, searchTerm, searchTerm],
     );
   }
 }

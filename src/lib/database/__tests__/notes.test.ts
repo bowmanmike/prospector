@@ -1,5 +1,5 @@
-import { setupTestDatabase, mockVault, mockNote } from "./test-utils";
-import { DatabaseQueries } from "../queries";
+import type { DatabaseQueries } from "../queries";
+import { mockNote, mockVault, setupTestDatabase } from "../test-utils";
 
 describe("NoteQueries", () => {
   let queries: DatabaseQueries;
@@ -10,7 +10,7 @@ describe("NoteQueries", () => {
     const setup = await setupTestDatabase();
     queries = setup.queries;
     cleanup = setup.cleanup;
-    
+
     // Create a test vault
     const vault = await queries.vaults.create(mockVault);
     vaultId = vault.id;
@@ -33,8 +33,12 @@ describe("NoteQueries", () => {
       expect(note.title).toBe(mockNote.title);
       expect(note.word_count).toBe(mockNote.word_count);
       expect(note.character_count).toBe(mockNote.character_count);
-      expect(note.frontmatter_tags).toBe(JSON.stringify(mockNote.frontmatter_tags));
-      expect(note.frontmatter_data).toBe(JSON.stringify(mockNote.frontmatter_data));
+      expect(note.frontmatter_tags).toBe(
+        JSON.stringify(mockNote.frontmatter_tags),
+      );
+      expect(note.frontmatter_data).toBe(
+        JSON.stringify(mockNote.frontmatter_data),
+      );
     });
 
     it("should create a note with minimal fields", async () => {
@@ -43,7 +47,7 @@ describe("NoteQueries", () => {
         file_path: "/test/minimal.md",
         file_name: "minimal.md",
       };
-      
+
       const note = await queries.notes.create(noteInput);
 
       expect(note.id).toBeDefined();
@@ -59,14 +63,17 @@ describe("NoteQueries", () => {
     it("should throw error for duplicate path in same vault", async () => {
       const noteInput = { ...mockNote, vault_id: vaultId };
       await queries.notes.create(noteInput);
-      
+
       await expect(queries.notes.create(noteInput)).rejects.toThrow();
     });
   });
 
   describe("getById", () => {
     it("should return note by id", async () => {
-      const created = await queries.notes.create({ ...mockNote, vault_id: vaultId });
+      const created = await queries.notes.create({
+        ...mockNote,
+        vault_id: vaultId,
+      });
       const found = await queries.notes.getById(created.id);
 
       expect(found).toEqual(created);
@@ -81,7 +88,10 @@ describe("NoteQueries", () => {
 
   describe("getByPath", () => {
     it("should return note by vault id and file path", async () => {
-      const created = await queries.notes.create({ ...mockNote, vault_id: vaultId });
+      const created = await queries.notes.create({
+        ...mockNote,
+        vault_id: vaultId,
+      });
       const found = await queries.notes.getByPath(vaultId, mockNote.file_path);
 
       expect(found).toEqual(created);
@@ -102,7 +112,7 @@ describe("NoteQueries", () => {
         file_path: "/test/note1.md",
         modified_time: "2024-01-01T00:00:00.000Z",
       });
-      
+
       const note2 = await queries.notes.create({
         ...mockNote,
         vault_id: vaultId,
@@ -126,8 +136,11 @@ describe("NoteQueries", () => {
 
   describe("update", () => {
     it("should update note fields", async () => {
-      const note = await queries.notes.create({ ...mockNote, vault_id: vaultId });
-      
+      const note = await queries.notes.create({
+        ...mockNote,
+        vault_id: vaultId,
+      });
+
       const updateData = {
         title: "Updated Title",
         word_count: 200,
@@ -139,27 +152,41 @@ describe("NoteQueries", () => {
 
       expect(updated.title).toBe(updateData.title);
       expect(updated.word_count).toBe(updateData.word_count);
-      expect(updated.frontmatter_tags).toBe(JSON.stringify(updateData.frontmatter_tags));
-      expect(updated.frontmatter_data).toBe(JSON.stringify(updateData.frontmatter_data));
+      expect(updated.frontmatter_tags).toBe(
+        JSON.stringify(updateData.frontmatter_tags),
+      );
+      expect(updated.frontmatter_data).toBe(
+        JSON.stringify(updateData.frontmatter_data),
+      );
     });
 
     it("should throw error when no fields to update", async () => {
-      const note = await queries.notes.create({ ...mockNote, vault_id: vaultId });
-      
-      await expect(queries.notes.update(note.id, {})).rejects.toThrow("No fields to update");
+      const note = await queries.notes.create({
+        ...mockNote,
+        vault_id: vaultId,
+      });
+
+      await expect(queries.notes.update(note.id, {})).rejects.toThrow(
+        "No fields to update",
+      );
     });
 
     it("should throw error for non-existent note", async () => {
-      await expect(queries.notes.update(999, { title: "Test" })).rejects.toThrow("Failed to update note");
+      await expect(
+        queries.notes.update(999, { title: "Test" }),
+      ).rejects.toThrow("Failed to update note");
     });
   });
 
   describe("delete", () => {
     it("should delete note by id", async () => {
-      const note = await queries.notes.create({ ...mockNote, vault_id: vaultId });
-      
+      const note = await queries.notes.create({
+        ...mockNote,
+        vault_id: vaultId,
+      });
+
       await queries.notes.delete(note.id);
-      
+
       const found = await queries.notes.getById(note.id);
       expect(found).toBeNull();
     });
@@ -167,10 +194,13 @@ describe("NoteQueries", () => {
 
   describe("deleteByPath", () => {
     it("should delete note by vault id and path", async () => {
-      const note = await queries.notes.create({ ...mockNote, vault_id: vaultId });
-      
+      const note = await queries.notes.create({
+        ...mockNote,
+        vault_id: vaultId,
+      });
+
       await queries.notes.deleteByPath(vaultId, mockNote.file_path);
-      
+
       const found = await queries.notes.getById(note.id);
       expect(found).toBeNull();
     });
@@ -184,7 +214,7 @@ describe("NoteQueries", () => {
         file_path: "/test/old.md",
         modified_time: "2024-01-01T00:00:00.000Z",
       });
-      
+
       const recent = await queries.notes.create({
         ...mockNote,
         vault_id: vaultId,
@@ -192,7 +222,10 @@ describe("NoteQueries", () => {
         modified_time: "2024-01-03T00:00:00.000Z",
       });
 
-      const notes = await queries.notes.getModifiedSince(vaultId, "2024-01-02T00:00:00.000Z");
+      const notes = await queries.notes.getModifiedSince(
+        vaultId,
+        "2024-01-02T00:00:00.000Z",
+      );
 
       expect(notes).toHaveLength(1);
       expect(notes[0].id).toBe(recent.id);
@@ -209,7 +242,7 @@ describe("NoteQueries", () => {
         title: "Important Note",
         frontmatter_data: { category: "work", priority: "high" },
       });
-      
+
       await queries.notes.create({
         ...mockNote,
         vault_id: vaultId,

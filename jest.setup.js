@@ -1,12 +1,20 @@
 import '@testing-library/jest-dom'
+import { TextEncoder, TextDecoder } from 'util'
 
-// Note: Removed global Request/Response mocks as they interfere with NextRequest
+// Minimal polyfills for Next.js server functions
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
 
-// Mock IndexedDB for testing
-global.indexedDB = {
-  open: jest.fn(),
-  deleteDatabase: jest.fn(),
-}
+// Mock Next.js cache functions for testing
+jest.mock('next/cache', () => ({
+  revalidatePath: jest.fn(),
+  revalidateTag: jest.fn(),
+}))
+
+jest.mock('next/navigation', () => ({
+  redirect: jest.fn(),
+}))
+
 
 // Mock FileReader for file handling tests
 global.FileReader = class {

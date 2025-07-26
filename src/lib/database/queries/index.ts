@@ -1,7 +1,7 @@
-import { Database } from "../index";
-import { VaultQueries } from "./vaults";
+import type { Database } from "../index";
 import { NoteQueries } from "./notes";
 import { TagQueries } from "./tags";
+import { VaultQueries } from "./vaults";
 
 export class DatabaseQueries {
   public vaults: VaultQueries;
@@ -14,7 +14,9 @@ export class DatabaseQueries {
     this.tags = new TagQueries(db);
   }
 
-  async transaction<T>(callback: (queries: DatabaseQueries) => Promise<T>): Promise<T> {
+  async transaction<T>(
+    callback: (queries: DatabaseQueries) => Promise<T>,
+  ): Promise<T> {
     await this.db.run("BEGIN TRANSACTION");
     try {
       const result = await callback(this);
@@ -27,7 +29,7 @@ export class DatabaseQueries {
   }
 }
 
-export * from "./vaults";
+export * from "../types";
 export * from "./notes";
 export * from "./tags";
-export * from "../types";
+export * from "./vaults";

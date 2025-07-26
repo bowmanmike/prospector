@@ -1,9 +1,9 @@
+import fs from "node:fs";
+import path from "node:path";
+import { promisify } from "node:util";
 import sqlite3 from "sqlite3";
-import { promisify } from "util";
-import fs from "fs";
-import path from "path";
-import { Database } from "../index";
-import { DatabaseQueries } from "../queries";
+import type { Database } from "./index";
+import { DatabaseQueries } from "./queries";
 
 export class TestDatabase {
   private db: sqlite3.Database | null = null;
@@ -11,7 +11,10 @@ export class TestDatabase {
 
   constructor() {
     // Create unique test database file
-    this.dbPath = path.join(__dirname, `test-${Date.now()}-${Math.random()}.db`);
+    this.dbPath = path.join(
+      __dirname,
+      `test-${Date.now()}-${Math.random()}.db`,
+    );
   }
 
   async connect(): Promise<Database> {
@@ -25,16 +28,18 @@ export class TestDatabase {
           reject(err);
           return;
         }
-        resolve(this.wrapDatabase(this.db!));
+        if (this.db) {
+          resolve(this.wrapDatabase(this.db));
+        }
       });
     });
   }
 
   private wrapDatabase(db: sqlite3.Database): Database {
     return {
-      run: (sql: string, params?: any[]) => {
+      run: (sql: string, params?: unknown[]) => {
         return new Promise((resolve, reject) => {
-          db.run(sql, params || [], function(err) {
+          db.run(sql, params || [], function (err) {
             if (err) {
               reject(err);
             } else {
@@ -51,17 +56,17 @@ export class TestDatabase {
 
   async initialize(): Promise<void> {
     const db = await this.connect();
-    
+
     // Read and execute schema file
-    const schemaPath = path.join(__dirname, "..", "schema.sql");
+    const schemaPath = path.join(__dirname, "schema.sql");
     const schema = fs.readFileSync(schemaPath, "utf8");
-    
+
     // Split by semicolons and execute each statement
     const statements = schema
       .split(";")
-      .map(stmt => stmt.trim())
-      .filter(stmt => stmt.length > 0);
-    
+      .map((stmt) => stmt.trim())
+      .filter((stmt) => stmt.length > 0);
+
     for (const statement of statements) {
       await db.run(statement);
     }
@@ -71,7 +76,7 @@ export class TestDatabase {
     if (this.db) {
       await promisify(this.db.close.bind(this.db))();
       this.db = null;
-      
+
       // Clean up test database file
       if (fs.existsSync(this.dbPath)) {
         fs.unlinkSync(this.dbPath);
@@ -80,7 +85,11 @@ export class TestDatabase {
   }
 }
 
-export async function setupTestDatabase(): Promise<{ db: Database; queries: DatabaseQueries; cleanup: () => Promise<void> }> {
+export async function setupTestDatabase(): Promise<{
+  db: Database;
+  queries: DatabaseQueries;
+  cleanup: () => Promise<void>;
+}> {
   const testDb = new TestDatabase();
   await testDb.initialize();
   const db = await testDb.connect();
@@ -117,12 +126,3 @@ export const mockTag = {
   vault_id: 1,
   name: "test-tag",
 };
-
-// Add a dummy test to prevent Jest from complaining about no tests
-describe("Test Utils", () => {
-  it("should export test utilities", () => {
-    expect(mockVault).toBeDefined();
-    expect(mockNote).toBeDefined();
-    expect(mockTag).toBeDefined();
-  });
-});
