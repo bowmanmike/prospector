@@ -332,12 +332,18 @@ periodically pull changes, never push from dev
 - [ ] Backup your main vault before any major testing
 - [ ] Keep dev environment clearly separated from production
 
+## Current Implementation Focus
+
+**Major Feature in Progress:** [Markdown Parsing & Search](docs/roadmaps/markdown-parsing-and-search.md)
+
+This comprehensive feature transforms Prospector from vault management to search-first knowledge discovery. See the detailed roadmap for implementation phases and technical specifications.
+
 ## Current TODOs
 
-### High Priority
-1. **Implement markdown parsing**: Add support for parsing markdown files with frontmatter extraction
-2. **Create note management**: Build note CRUD operations using Server Actions pattern
-3. **Add vault statistics**: Display note counts, tag counts, and file statistics in UI
+### High Priority (See Roadmap)
+1. **Phase 1: File Discovery & Basic UI** - File scanning infrastructure and search-first UI transformation
+2. **Phase 2: Metadata Parsing & Storage** - Frontmatter parsing and content analysis  
+3. **Phase 3: Search & Discovery** - Text search, filtering, and vault statistics
 
 ### Medium Priority
 - **Multi-vault support**: Allow users to store and switch between multiple vaults (not simultaneous access, but vault selection/switching)

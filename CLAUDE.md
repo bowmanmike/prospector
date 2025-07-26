@@ -136,6 +136,13 @@ npm run test:coverage
 
 See PROJECT_OVERVIEW.md for detailed user stories and implementation phases.
 
+## Project Planning & Roadmaps
+
+**Implementation roadmaps** are maintained in `docs/roadmaps/` with detailed breakdowns of major features:
+- Current focus: [Markdown Parsing & Search](docs/roadmaps/markdown-parsing-and-search.md)
+
+These roadmaps provide phase-by-phase implementation plans that persist across Claude sessions and serve as the definitive reference for complex features.
+
 ## Development Notes
 
 - The project is designed to run entirely locally (no cloud dependencies)
