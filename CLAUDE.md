@@ -2,6 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Cross-Document References
+Pair this guide with `AGENTS.md` for the complementary contributor workflow, and consult both `README.md` and `PROJECT_OVERVIEW.md` for current feature scope and roadmap context.
+
 ## Development Guidelines & Expectations
 
 ### Code Quality Standards
