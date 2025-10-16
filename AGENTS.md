@@ -15,5 +15,7 @@ Biome enforces two-space indentation and double quotes across TypeScript, React,
 ## Testing Guidelines
 Jest with the Next.js preset and Testing Library drive unit and integration coverage. Place new specs alongside code using the `.test.ts` or `.test.tsx` suffix. Spin up any SQLite fixtures via helpers in `src/lib/database/test-utils.ts` and avoid checking generated `.db` files into version control. Run `npm run test` locally; add `npm run test:coverage` before major refactors and keep statements coverage steady or improving.
 
+Once a feature is complete, verify quality gates by ensuring `npm run test`, `npm run typecheck`, and `npm run check` all succeed.
+
 ## Commit & Pull Request Guidelines
 Follow the existing Git log: one cohesive change per commit, imperative Title Case subject (e.g., `Improve Vault Deletion Path`), and no trailing period. PRs should describe intent, outline testing evidence (lint/test commands), and link issues or roadmap items. For UI changes, attach before/after screenshots or short Looms. Ensure automated checks pass before requesting review.

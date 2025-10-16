@@ -9,6 +9,7 @@
     "lint": "biome lint",
     "format": "biome format",
     "fix": "biome check --fix",
+    "check": "biome check",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
