@@ -60,7 +60,10 @@ describe("DatabaseQueries Transaction Support", () => {
 
       // Verify rollback - vault should not exist
       expect(vaultId).not.toBeNull();
-      const vault = await queries.vaults.getById(vaultId!);
+      if (vaultId === null) {
+        throw new Error("Expected vaultId to be set");
+      }
+      const vault = await queries.vaults.getById(vaultId);
       expect(vault).toBeNull();
     });
 
@@ -84,7 +87,10 @@ describe("DatabaseQueries Transaction Support", () => {
 
       // Verify rollback
       expect(vaultId).not.toBeNull();
-      const vault = await queries.vaults.getById(vaultId!);
+      if (vaultId === null) {
+        throw new Error("Expected vaultId to be set");
+      }
+      const vault = await queries.vaults.getById(vaultId);
       expect(vault).toBeNull();
     });
 
