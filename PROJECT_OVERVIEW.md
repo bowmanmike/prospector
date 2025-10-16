@@ -23,6 +23,7 @@ notes' content and surface relevant connections automatically.
 
 - **Frontend**: Next.js 14+ with TypeScript
 - **Styling**: Tailwind CSS
+- **AI Model Interface**: Vercel AI SDK for provider-agnostic access to local and hosted LLMs
 - **Local LLM**: Ollama or LM Studio integration
 - **File Processing**: Direct filesystem access to Obsidian vault
 - **Search**: Vector embeddings for semantic search
@@ -195,14 +196,27 @@ notes' content and surface relevant connections automatically.
 - [ ] Automatic LLM model download and configuration
 - [ ] Health checks and service monitoring
 
+### Phase 6: Platform Operations
+
+#### 18. Model Provider Administration
+
+**As an admin, I want to configure model providers and credentials without editing config files**
+
+- [ ] Build an admin panel for selecting local vs. hosted model providers
+- [ ] Manage API keys, local endpoints, and access tokens securely
+- [ ] Surface provider diagnostics (latency, availability, model version) to guide selection
+- [ ] Persist provider preferences per environment or vault with sensible fallbacks
+
 ## Technical Implementation Notes
 
-### Local LLM Integration
+### LLM Integration & Provider Management
 
-- Support for Ollama and LM Studio APIs
-- Model selection for different tasks (embeddings vs. text generation)
-- Fallback handling when LLM is unavailable
-- Batch processing for large vaults
+- Use the Vercel AI SDK to abstract provider calls and enable per-request streaming, structured outputs, and tool integrations
+- Support Ollama, LM Studio, and other OpenAI-compatible local runtimes through the shared SDK contract
+- Allow optional hosted models (OpenAI, Anthropic, etc.) behind the same interface when credentials are provided
+- Expose admin-level controls for selecting default models and managing credentials
+- Fallback handling and diagnostics when preferred providers are unavailable
+- Batch processing for large vaults without blocking interactive tasks
 
 ### File System Integration
 
@@ -350,6 +364,7 @@ This comprehensive feature transforms Prospector from vault management to search
 - Add comprehensive error handling for file system operations
 - Implement proper logging system to replace console.* usage
 - Add integration tests for full Server Actions workflows
+- Design Vercel AI SDK-backed admin panel for model selection, credentials, and diagnostics
 - Implement file watching for vault changes
 
 ### Low Priority
@@ -365,4 +380,3 @@ This comprehensive feature transforms Prospector from vault management to search
   frequently
 - **Enhanced productivity**: Faster access to relevant information
 - **Seamless integration**: Works naturally with existing Obsidian workflows
-
