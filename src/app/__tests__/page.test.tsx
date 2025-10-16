@@ -1,3 +1,4 @@
+import "@testing-library/jest-dom";
 import {
   act,
   fireEvent,
@@ -5,6 +6,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import type { Vault } from "@/lib/database/types";
 import Home from "../page";
 
 // Mock the Server Actions
@@ -24,11 +26,20 @@ const mockCreateVault = createVault as jest.MockedFunction<typeof createVault>;
 const mockGetVaults = getVaults as jest.MockedFunction<typeof getVaults>;
 const mockDeleteVault = deleteVault as jest.MockedFunction<typeof deleteVault>;
 
-const mockVault = {
+const createMockFileList = (files: File[]): FileList => {
+  const fileList = Object.assign([...files], {
+    item: (index: number) => files[index] ?? null,
+  });
+
+  return fileList as unknown as FileList;
+};
+
+const mockVault: Vault = {
   id: 1,
   name: "test-vault",
   path: "test-vault",
   created_at: "2023-01-01T00:00:00.000Z",
+  last_scanned: null,
 };
 
 describe("Home Component", () => {
@@ -161,21 +172,10 @@ describe("Home Component", () => {
         writable: false,
       });
 
-      // Create a mock FileList
-      const mockFileList = {
-        0: mockFiles[0],
-        1: mockFiles[1],
-        length: 2,
-        item: (index: number) => mockFiles[index],
-        [Symbol.iterator]: function* () {
-          for (let i = 0; i < this.length; i++) {
-            yield this[i];
-          }
-        },
-      } as unknown as FileList;
-
       await act(async () => {
-        fireEvent.change(fileInput, { target: { files: mockFileList } });
+        fireEvent.change(fileInput, {
+          target: { files: createMockFileList(mockFiles) },
+        });
       });
 
       await waitFor(() => {
@@ -213,19 +213,10 @@ describe("Home Component", () => {
         writable: false,
       });
 
-      const mockFileList = {
-        0: mockFiles[0],
-        length: 1,
-        item: (index: number) => mockFiles[index],
-        [Symbol.iterator]: function* () {
-          for (let i = 0; i < this.length; i++) {
-            yield this[i];
-          }
-        },
-      } as unknown as FileList;
-
       await act(async () => {
-        fireEvent.change(fileInput, { target: { files: mockFileList } });
+        fireEvent.change(fileInput, {
+          target: { files: createMockFileList(mockFiles) },
+        });
       });
 
       // Should not call createVault for invalid vault
@@ -248,7 +239,9 @@ describe("Home Component", () => {
       ) as HTMLInputElement;
 
       await act(async () => {
-        fireEvent.change(fileInput, { target: { files: [] } });
+        fireEvent.change(fileInput, {
+          target: { files: createMockFileList([]) },
+        });
       });
 
       expect(mockCreateVault).not.toHaveBeenCalled();
@@ -280,19 +273,10 @@ describe("Home Component", () => {
         writable: false,
       });
 
-      const mockFileList = {
-        0: mockFiles[0],
-        length: 1,
-        item: (index: number) => mockFiles[index],
-        [Symbol.iterator]: function* () {
-          for (let i = 0; i < this.length; i++) {
-            yield this[i];
-          }
-        },
-      } as unknown as FileList;
-
       await act(async () => {
-        fireEvent.change(fileInput, { target: { files: mockFileList } });
+        fireEvent.change(fileInput, {
+          target: { files: createMockFileList(mockFiles) },
+        });
       });
 
       await waitFor(() => {

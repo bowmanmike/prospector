@@ -39,7 +39,7 @@ describe("DatabaseQueries Transaction Support", () => {
     });
 
     it("should rollback failed transaction", async () => {
-      let vaultId: number;
+      let vaultId: number | null = null;
 
       try {
         await queries.transaction(async (tx) => {
@@ -59,12 +59,13 @@ describe("DatabaseQueries Transaction Support", () => {
       }
 
       // Verify rollback - vault should not exist
-      const vault = await queries.vaults.getById(vaultId);
+      expect(vaultId).not.toBeNull();
+      const vault = await queries.vaults.getById(vaultId!);
       expect(vault).toBeNull();
     });
 
     it("should rollback on thrown error", async () => {
-      let vaultId: number;
+      let vaultId: number | null = null;
 
       try {
         await queries.transaction(async (tx) => {
@@ -82,7 +83,8 @@ describe("DatabaseQueries Transaction Support", () => {
       }
 
       // Verify rollback
-      const vault = await queries.vaults.getById(vaultId);
+      expect(vaultId).not.toBeNull();
+      const vault = await queries.vaults.getById(vaultId!);
       expect(vault).toBeNull();
     });
 
